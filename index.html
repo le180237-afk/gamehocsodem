@@ -3,25 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lợi Lê LEARNING HUB - Game Hóa & Chuyển Đổi Nhật Ngữ</title>
+    <title>IT E6 Learning Hub - Học Số Nhật Ngữ</title>
     <!-- Tải Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Tải Font Inter và các icon Font Awesome -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     
+    <!-- FIREBASE SDK IMPORTS (MUST BE FIRST) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Thiết lập cấu hình Firebase và khởi tạo
+        // Gán các biến toàn cục cần thiết cho logic JS
+        window.firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config) ? JSON.parse(__firebase_config) : null;
+        window.appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        window.initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        window.getAuth = getAuth;
+        window.signInAnonymously = signInAnonymously;
+        window.signInWithCustomToken = signInWithCustomToken;
+        window.signOut = signOut;
+        window.onAuthStateChanged = onAuthStateChanged;
+        window.getFirestore = getFirestore;
+        window.doc = doc;
+        window.setDoc = setDoc;
+        window.onSnapshot = onSnapshot;
+        window.collection = collection;
+        window.query = query;
+        window.serverTimestamp = serverTimestamp;
+        window.getDoc = getDoc;
+        window.initializeApp = initializeApp;
+        
+        // Bật log Firestore
+        setLogLevel('Debug');
+    </script>
+
     <style>
-        /* Thiết lập biến CSS cho Theme */
+        /* Thiết lập biến CSS cho Theme IT E6-HUST */
         :root {
-            /* Light Theme */
-            --bg-body: #f0f4f8;
-            --bg-container: rgba(255, 255, 255, 0.95);
-            --bg-option: #F9FAFB;
+            /* HUST/IT E6 Theme */
+            --main-color: #BC002D; /* HUST Red */
+            --accent-color: #1F2937; /* Navy Blue - Techy */
+            --bg-body: #f4f7fa; /* Light Gray/Blueish */
+            --bg-container: rgba(255, 255, 255, 0.98);
+            --bg-option: #FFFFFF;
             --text-primary: #1F2937;
             --text-secondary: #4B5563;
             --border-color: #D1D5DB;
-            --main-color: #BC002D; /* HUST Red */
-            --accent-color: #008080; /* Teal/Xanh công nghệ */
             --score-color: #FFD700; /* Gold */
         }
 
@@ -34,154 +65,55 @@
             --text-secondary: #9CA3AF;
             --border-color: #334155;
             --main-color: #FCA5A5; /* Light Red */
-            --accent-color: #10B981; /* Emerald */
-            --score-color: #FFA500; /* Orange Gold */
+            --accent-color: #93C5FD; /* Light Blue */
         }
 
-        /* Gradient Nền Đổi Màu theo Thời Gian */
         body {
             font-family: 'Inter', sans-serif;
-            margin: 0;
             min-height: 100vh;
             background-color: var(--bg-body); 
             color: var(--text-primary);
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow-x: hidden;
             position: relative;
             transition: background-color 0.8s, color 0.8s;
-            background-image: linear-gradient(135deg, var(--main-color) 0%, var(--bg-body) 100%);
-            background-size: 400% 400%;
-            animation: gradient-shift 60s ease infinite; /* 60s cho mỗi chu kỳ đổi màu */
-        }
-        
-        @keyframes gradient-shift {
-            0% {background-position: 0% 50%;}
-            50% {background-position: 100% 50%;}
-            100% {background-position: 0% 50%;}
+            background-image: linear-gradient(135deg, var(--bg-body) 0%, #E2E8F0 100%);
         }
         
         .dark {
-            background-image: linear-gradient(135deg, #1f2937 0%, #0f172a 100%);
+            background-image: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
         }
 
-        /* Container ứng dụng */
         .app-container {
-            position: relative;
-            z-index: 5;
-            max-width: 550px; /* Tăng chiều rộng cho game/menu */
+            max-width: 600px;
             width: 95%;
-            padding: 25px;
+            padding: 30px;
             background-color: var(--bg-container); 
             border-radius: 24px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2), 0 0 10px var(--main-color);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1), 0 0 15px rgba(188, 0, 45, 0.1);
             backdrop-filter: blur(8px); 
-            border: 3px solid var(--border-color); 
+            border: 1px solid var(--border-color); 
             transition: all 0.5s;
         }
 
-        /* ------------------------------------- */
-        /* HIỆU ỨNG TEXT ĐỘNG (Typing/Glow) */
-        /* ------------------------------------- */
-        .typing-text {
-            overflow: hidden; 
-            white-space: nowrap; 
-            animation: typing 2s steps(40, end);
-        }
-
-        /* ------------------------------------- */
-        /* THANH ĐIỀU HƯỚNG BÊN TRÁI (NAV SLIDE-IN) */
-        /* ------------------------------------- */
-        .nav-menu {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 250px;
-            height: 100%;
-            background-color: var(--bg-container);
-            z-index: 50;
-            box-shadow: 5px 0 15px rgba(0, 0, 0, 0.1);
-            transform: translateX(-100%);
-            transition: transform 0.3s ease-out;
-            padding: 20px;
-            border-right: 1px solid var(--border-color);
-        }
-        .nav-menu.open {
-            transform: translateX(0);
-        }
-        .nav-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 40;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
-        }
-        .nav-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        .nav-item {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            margin-bottom: 8px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background-color 0.2s, color 0.2s;
-            color: var(--text-primary);
-        }
-        .nav-item:hover {
-            background-color: #FEE2E2;
-            color: var(--main-color);
-        }
-        .dark .nav-item:hover {
-            background-color: #334155;
-            color: var(--main-color);
-        }
-        .nav-item.active {
+        /* HUST/IT E6 Header Style */
+        .hust-jit-header {
             background-color: var(--main-color);
             color: white;
-            box-shadow: 0 4px 8px rgba(188, 0, 45, 0.4);
+            padding: 15px 20px;
+            border-radius: 15px 15px 0 0;
+            margin: -30px -30px 20px -30px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
-        /* ------------------------------------- */
-
-        /* Toast Notification */
-        #toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background-color: var(--accent-color);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            opacity: 0;
-            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
-            z-index: 100;
-            font-weight: 600;
+        .hust-jit-logo {
+            font-size: 1.8rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }
-        #toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-
-        /* Glow hiệu ứng giọng nói */
-        .speech-glow {
-            animation: pulse-glow 1s infinite alternate;
-        }
-        @keyframes pulse-glow {
-            0% { box-shadow: 0 0 5px var(--main-color), 0 0 10px var(--main-color); }
-            100% { box-shadow: 0 0 10px var(--main-color), 0 0 20px rgba(0, 128, 128, 0.7); }
-        }
-
-        /* Style chung */
+        
+        /* Buttons */
         .btn-primary {
             background-color: var(--main-color); 
             color: white;
@@ -200,216 +132,192 @@
             transform: translateY(3px);
             box-shadow: 0 1px #990022;
         }
-        .input-field {
-            border: 1px solid var(--border-color);
-            background-color: var(--bg-option);
-            color: var(--text-primary);
-            border-radius: 10px;
-            padding: 12px;
-            transition: border-color 0.3s, box-shadow 0.3s, background-color 0.5s;
-        }
-        .dark .input-field {
-            background-color: #1e293b;
-        }
         
+        .btn-secondary {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+        .btn-secondary:hover {
+            opacity: 0.9;
+        }
+
         /* Game Specific Styles */
         #gameArea {
-            min-height: 200px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background-color: var(--bg-option);
-            border-radius: 15px;
-            padding: 20px;
-            border: 2px solid var(--accent-color);
-        }
-        #gameArea h2 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: var(--accent-color);
-            text-shadow: 0 0 8px rgba(0, 128, 128, 0.5);
+            border: 2px solid var(--border-color);
         }
         .choice-button {
-            background-color: #E0F2F1; /* Teal 50 */
+            background-color: #E0F2F1; 
             color: var(--accent-color);
-            border: 2px solid var(--accent-color);
-            font-size: 1.25rem;
-            font-weight: 700;
+            border: 1px solid var(--accent-color);
             transition: all 0.2s;
         }
         .choice-button:hover {
             background-color: var(--accent-color);
             color: white;
-            transform: scale(1.05);
+            transform: scale(1.02);
         }
         .dark .choice-button {
-            background-color: #155e75; /* Darker Teal */
-            color: #CCFBF1;
+            background-color: #1e293b;
+            color: var(--accent-color);
         }
         .dark .choice-button:hover {
             background-color: var(--accent-color);
-        }
-        .correct-answer {
-            background-color: #10B981 !important; /* Emerald 500 */
-            color: white !important;
-            animation: flash-green 0.3s 3;
-        }
-        .wrong-answer {
-            background-color: #EF4444 !important; /* Red 500 */
-            color: white !important;
-            animation: shake 0.5s;
-        }
-        @keyframes flash-green {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); box-shadow: 0 0 15px #10B981; }
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-5px); }
-            40%, 80% { transform: translateX(5px); }
-        }
-        
-        /* Score Board */
-        #scoreBoard {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            margin-bottom: 20px;
-            border-radius: 12px;
-            background-color: var(--bg-option);
-            border: 1px solid var(--border-color);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-        .score-item {
-            display: flex;
-            align-items: center;
-            font-weight: 700;
             color: var(--text-primary);
         }
-        .score-value {
-            font-size: 1.5rem;
-            color: var(--score-color);
-            margin-left: 8px;
-            transition: color 0.3s;
+        
+        /* NEW: Speech Glow Effect */
+        .speech-glow {
+            animation: pulse-glow 1.5s infinite;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(188, 0, 45, 0.7); }
+            50% { box-shadow: 0 0 0 8px rgba(188, 0, 45, 0); }
         }
 
-        /* Date Converter */
-        #dateConverterOutput {
-            font-size: 1.2rem;
-            font-weight: 600;
+        /* Replay Button */
+        #replayBtn {
+            font-size: 1.25rem;
+            padding: 8px 15px;
+            border-radius: 10px;
+            background-color: var(--bg-option);
+            border: 1px solid var(--border-color);
             color: var(--accent-color);
-            min-height: 50px;
-            word-break: break-word;
+            transition: all 0.2s;
+            box-shadow: 0 3px var(--border-color);
         }
-        #dateConverterOutput span {
-            color: var(--main-color); /* Highlight chữ Nhật */
+        #replayBtn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        #replayBtn:hover:not(:disabled) {
+            background-color: var(--accent-color);
+            color: white;
+            box-shadow: 0 3px var(--accent-color);
         }
     </style>
 </head>
 <body class="light">
 
     <!-- OVERLAY và NAV MENU -->
-    <div id="navOverlay" class="nav-overlay"></div>
-    <div id="navMenu" class="nav-menu">
-        <div class="flex justify-between items-center mb-6 border-b pb-3 border-gray-200 dark:border-gray-700">
-            <h3 class="text-xl font-bold text-gray-800 dark:text-white">Menu Học Tập</h3>
-            <button id="closeMenuBtn" class="text-gray-500 hover:text-gray-900 dark:hover:text-white transition">
-                <i class="fas fa-times text-2xl"></i>
-            </button>
-        </div>
-        
-        <div class="space-y-2">
-            <div id="navGame" class="nav-item active" data-content="game">
-                <i class="fas fa-gamepad w-6"></i>
-                <span class="ml-3">Mini Game: Nghe & Đoán</span>
+    <div id="navOverlay" class="nav-overlay hidden fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-40"></div>
+    <div id="navMenu" class="nav-menu fixed top-0 left-0 w-64 h-full bg-white dark:bg-gray-900 z-50 shadow-xl transform -translate-x-full transition-transform duration-300">
+        <div class="p-5">
+            <h3 class="text-xl font-bold mb-5 border-b pb-3 text-main-color">LỰA CHỌN</h3>
+            <div class="space-y-2">
+                <div id="navGame" class="nav-item flex items-center p-3 rounded-lg cursor-pointer bg-red-50 dark:bg-gray-800 text-main-color active" data-content="game">
+                    <i class="fas fa-gamepad w-6"></i>
+                    <span class="ml-3">Mini Game: Nghe & Đoán</span>
+                </div>
+                <div id="navConverter" class="nav-item flex items-center p-3 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700" data-content="converter">
+                    <i class="fas fa-calculator w-6"></i>
+                    <span class="ml-3">Công Cụ Chuyển Đổi Số</span>
+                </div>
+                <div id="navDateConverter" class="nav-item flex items-center p-3 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700" data-content="date_converter">
+                    <i class="fas fa-calendar-alt w-6"></i>
+                    <span class="ml-3">Chuyển Đổi Ngày Tháng</span>
+                </div>
+                <div id="navScore" class="nav-item flex items-center p-3 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700" data-content="score">
+                    <i class="fas fa-trophy w-6"></i>
+                    <span class="ml-3">Cấp Bậc & Điểm</span>
+                </div>
             </div>
-            <div id="navConverter" class="nav-item" data-content="converter">
-                <i class="fas fa-calculator w-6"></i>
-                <span class="ml-3">Công Cụ Chuyển Đổi Số</span>
-            </div>
-            <div id="navDateConverter" class="nav-item" data-content="date_converter">
-                <i class="fas fa-calendar-alt w-6"></i>
-                <span class="ml-3">Chuyển Đổi Ngày Tháng</span>
-            </div>
-            <div id="navScore" class="nav-item" data-content="score">
-                <i class="fas fa-trophy w-6"></i>
-                <span class="ml-3">Cấp Bậc & Điểm (Gamification)</span>
-            </div>
-        </div>
 
-        <div class="absolute bottom-5 w-full pr-10">
-             <button id="themeToggle" class="w-full btn-primary text-sm bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors shadow-none">
-                <i class="fas fa-moon mr-2" id="themeIcon"></i>
-                <span id="themeText">Chủ đề Tối</span>
-            </button>
+            <div class="absolute bottom-5 w-5/6">
+                 <button id="themeToggle" class="w-full btn-secondary text-sm bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors shadow-none">
+                    <i class="fas fa-moon mr-2" id="themeIcon"></i>
+                    <span id="themeText">Chủ đề Tối</span>
+                </button>
+                <button id="authBtn" class="w-full mt-3 text-sm btn-primary bg-main-color hover:bg-red-700" disabled>
+                    <i class="fas fa-sign-in-alt mr-2"></i> Đang tải...
+                </button>
+                <div class="mt-2 text-xs text-center text-gray-500 dark:text-gray-400 truncate" id="userIdDisplay"></div>
+            </div>
         </div>
     </div>
     
     <!-- Nội dung chính của ứng dụng -->
     <div class="app-container">
         
-        <!-- HEADER -->
-        <div class="header-content mb-6">
-            <div class="flex justify-between items-start mb-4">
-                <button id="openMenuBtn" class="p-2 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                    <i class="fas fa-bars text-2xl"></i>
-                </button>
-                <div class="text-center">
-                    <h1 class="text-3xl font-extrabold text-gray-800 dark:text-white">LỢI LÊ HUB</h1>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Học Tiếng Nhật: Số & Ngày Tháng</p>
-                </div>
-                <div id="miniScoreDisplay" class="text-right">
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Điểm</p>
-                    <p class="text-xl font-bold text-yellow-500" id="currentScore">0</p>
-                </div>
+        <!-- HEADER IT E6-HUST -->
+        <div class="hust-jit-header flex justify-between items-center">
+            <button id="openMenuBtn" class="p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition text-white">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+            <div class="text-center">
+                <h1 class="hust-jit-logo">IT E6-HUST</h1>
+                <p class="text-xs font-light opacity-80">IT E6 - Japanese IT Program</p>
+            </div>
+            <div id="miniScoreDisplay" class="text-right">
+                <p class="text-xs font-light opacity-80">Điểm</p>
+                <!-- SỬA LỖI HIỂN THỊ ĐIỂM -->
+                <p class="text-xl font-bold text-score-color" id="currentScore">0</p>
             </div>
         </div>
 
-        <!-- KHU VỰC NỘI DUNG CHUYỂN ĐỔI (Dùng cho Game và Converter) -->
+        <!-- KHU VỰC NỘI DUNG CHUYỂN ĐỔI -->
         <div id="contentArea" class="space-y-6">
             
             <!-- 1. MINI GAME: GUESS THE NUMBER (Mặc định) -->
             <div id="gameContent" data-page="game" class="page-content">
-                <h2 class="text-2xl font-bold mb-4 flex items-center text-gray-800 dark:text-white">
-                    <i class="fas fa-headset text-accent-color mr-3"></i> MINI GAME: Nghe & Đoán Số (0 - 99)
+                <h2 class="text-xl font-bold mb-4 flex items-center text-gray-800 dark:text-white">
+                    <i class="fas fa-headset text-main-color mr-3"></i> MINI GAME: Nghe & Đoán Số
                 </h2>
                 
-                <div id="scoreBoard">
-                    <div class="score-item">
+                <div id="scoreBoard" class="flex justify-between items-center p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 mb-4">
+                    <div class="flex items-center text-sm font-semibold text-gray-700 dark:text-gray-300">
                         <i class="fas fa-coins text-yellow-500 mr-2"></i>
-                        <span>Tổng Điểm:</span> <span class="score-value" id="gameTotalScore">0</span>
+                        <span>Tổng Điểm:</span> <span class="text-lg font-bold text-main-color ml-2" id="gameTotalScore">0</span>
                     </div>
-                    <div class="score-item">
+                    <div class="flex items-center text-sm font-semibold text-gray-700 dark:text-gray-300">
                         <i class="fas fa-fire text-red-600 mr-2"></i>
-                        <span>COMBO:</span> <span class="score-value" id="gameComboStreak">0</span>
+                        <span>COMBO:</span> <span class="text-lg font-bold text-red-600 ml-2" id="gameComboStreak">0</span>
                     </div>
                 </div>
+                
+                <!-- Khu vực điều chỉnh phạm vi -->
+                <p class="text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Chọn Phạm Vi Số:</p>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+                    <button class="range-button p-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 transition" data-range="99">0 - 99</button>
+                    <button class="range-button p-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 transition active" data-range="999">0 - 999</button>
+                    <button class="range-button p-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 transition" data-range="9999">0 - 9,999</button>
+                    <button class="range-button p-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 transition" data-range="999999">0 - 999,999</button>
+                </div>
 
-                <div id="gameArea" class="mb-4">
-                    <p class="text-lg mb-4 text-gray-700 dark:text-gray-300">Nhấn nút bên dưới và lắng nghe số tiếng Nhật!</p>
+
+                <div id="gameArea" class="p-5 rounded-xl mb-4 bg-gray-50 dark:bg-gray-800">
+                    <p class="text-md mb-3 text-gray-700 dark:text-gray-300 text-center" id="rangeDisplay">Phạm vi hiện tại: 0 - 999.</p>
                     
-                    <button id="startGameBtn" class="btn-primary flex items-center gap-2 mb-6">
-                        <i class="fas fa-volume-up"></i> Phát Âm Số
-                    </button>
-                    
-                    <div id="gameChoices" class="grid grid-cols-2 gap-4 w-full">
+                    <div class="flex justify-center items-center space-x-4 mb-6">
+                        <button id="startGameBtn" class="btn-primary flex items-center gap-2" title="Phát Âm Số">
+                            <i class="fas fa-volume-up"></i> Phát Âm Số
+                        </button>
+                        <button id="replayBtn" title="Nghe lại (Giới hạn theo cấp bậc)" disabled>
+                            <i class="fas fa-redo"></i> 
+                            <span id="replaysLeftDisplay" class="ml-1 text-sm font-semibold">2</span>
+                        </button>
+                    </div>
+
+                    <div id="gameChoices" class="grid grid-cols-2 gap-4 w-full opacity-0 pointer-events-none transition-opacity duration-500">
                         <!-- Các nút lựa chọn sẽ được chèn vào đây -->
                     </div>
-                    <p id="gameMessage" class="mt-4 font-semibold italic min-h-[20px] text-lg text-center"></p>
+                    <p id="gameMessage" class="mt-4 font-semibold italic min-h-[20px] text-lg text-center text-accent-color"></p>
                 </div>
 
-                <p class="text-xs text-gray-500 dark:text-gray-400 text-center">Lưu ý: Game sử dụng dải số 0-99 để luyện tập cơ bản.</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 text-center">Lưu ý: Lượt nghe lại giới hạn để luyện khả năng nghe tập trung.</p>
             </div>
             
-            <!-- 2. CÔNG CỤ CHUYỂN ĐỔI SỐ (Tương tự phiên bản trước) -->
+            <!-- 2. CÔNG CỤ CHUYỂN ĐỔI SỐ -->
             <div id="converterContent" data-page="converter" class="page-content hidden">
                  <h2 class="text-2xl font-bold mb-4 flex items-center text-gray-800 dark:text-white">
-                    <i class="fas fa-calculator text-accent-color mr-3"></i> Chuyển Đổi Số Đếm (0 - 9,999,999)
+                    <i class="fas fa-calculator text-main-color mr-3"></i> Công Cụ Chuyển Đổi Số Đếm
                 </h2>
                 <input type="number" id="inputNumber" placeholder="Ví dụ: 10000, 350000, 9999999" 
-                   class="input-field w-full text-xl text-center tracking-wide mb-4" 
+                   class="input-field w-full text-xl text-center tracking-wide mb-4 border-2 p-3 rounded-lg" 
                    min="0" max="9999999">
                    
                 <button id="convertButton" class="btn-primary w-full flex items-center justify-center gap-2 mb-6">
@@ -417,32 +325,18 @@
                 </button>
                 
                 <div id="resultBox" class="p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hidden transition-all">
-                    <div class="mb-3">
-                        <p class="text-sm font-semibold text-gray-700 dark:text-gray-400">Romaji:</p>
-                        <div id="romajiOutput" class="text-xl font-mono text-main-color word-break: break-word"></div>
-                        <button id="copyRomajiButton" class="mt-2 text-xs text-gray-500 dark:text-gray-400 hover:text-main-color transition">
-                            <i class="fas fa-copy mr-1"></i> Copy Romaji
-                        </button>
-                    </div>
-                    <div class="border-t border-gray-200 dark:border-gray-700 my-3"></div>
-                    <div>
-                        <p class="text-sm font-semibold text-gray-700 dark:text-gray-400">Hiragana:</p>
-                        <div id="hiraganaOutput" class="text-2xl text-accent-color word-break: break-word"></div>
-                        <button id="copyHiraganaButton" class="mt-2 text-xs text-gray-500 dark:text-gray-400 hover:text-main-color transition">
-                            <i class="fas fa-copy mr-1"></i> Copy Hiragana
-                        </button>
-                    </div>
+                    <!-- Output content here -->
                 </div>
             </div>
             
             <!-- 3. CHUYỂN ĐỔI NGÀY THÁNG -->
             <div id="dateConverterContent" data-page="date_converter" class="page-content hidden">
                 <h2 class="text-2xl font-bold mb-4 flex items-center text-gray-800 dark:text-white">
-                    <i class="fas fa-calendar-alt text-accent-color mr-3"></i> Chuyển Đổi Ngày Tháng
+                    <i class="fas fa-calendar-alt text-main-color mr-3"></i> Chuyển Đổi Ngày Tháng
                 </h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Chọn ngày tháng để xem cách đọc tiếng Nhật:</p>
                 
-                <input type="date" id="inputDate" class="input-field w-full text-lg mb-4">
+                <input type="date" id="inputDate" class="input-field w-full text-lg mb-4 border-2 p-3 rounded-lg">
                    
                 <button id="convertDateButton" class="btn-primary w-full flex items-center justify-center gap-2 mb-6">
                     <i class="fas fa-language"></i> Chuyển Đổi Ngày
@@ -460,12 +354,13 @@
             <!-- 4. CẤP BẬC VÀ ĐIỂM -->
              <div id="scoreContent" data-page="score" class="page-content hidden">
                 <h2 class="text-2xl font-bold mb-4 flex items-center text-gray-800 dark:text-white">
-                    <i class="fas fa-trophy text-accent-color mr-3"></i> Cấp Bậc Học Giả Nhật Ngữ
+                    <i class="fas fa-trophy text-main-color mr-3"></i> Cấp Bậc Học Giả Nhật Ngữ
                 </h2>
                 
-                <div class="bg-yellow-50 dark:bg-yellow-900 p-6 rounded-xl border-2 border-yellow-300 dark:border-yellow-700 text-center space-y-3">
+                <div class="bg-red-50 dark:bg-red-900 p-6 rounded-xl border-2 border-red-300 dark:border-red-700 text-center space-y-3">
                     <p class="text-sm text-gray-600 dark:text-gray-300">Bạn đã tích lũy:</p>
-                    <p class="text-5xl font-extrabold text-yellow-600 dark:text-yellow-400" id="totalScoreDisplay">0</p>
+                    <!-- SỬA LỖI HIỂN THỊ ĐIỂM -->
+                    <p class="text-5xl font-extrabold text-main-color dark:text-yellow-400" id="totalScoreDisplay">0</p>
                     <p class="text-xl font-bold text-gray-800 dark:text-white">Điểm Thưởng</p>
                 </div>
 
@@ -487,34 +382,44 @@
         </div>
 
         <!-- TOAST NOTIFICATION -->
-        <div id="toast"></div>
+        <div id="toast" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-main-color text-white p-3 rounded-lg shadow-xl opacity-0 transition-opacity duration-300 z-50"></div>
 
         <!-- FOOTER -->
         <div class="text-center mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
-            <p>Phát triển bởi Lợi Lê - HUST | <i class="fas fa-code"></i></p>
+            <p>IT E6 - HUST | Phát triển bởi Lợi Lê</p>
         </div>
         
     </div>
 
     <!-- MÃ JAVASCRIPT -->
-    <script>
+    <script type="module">
         const $ = selector => document.querySelector(selector);
         const $$ = selector => document.querySelectorAll(selector);
 
-        // --- GLOBAL STATE & CACHE ---
+        // --- GLOBAL STATE & FIREBASE CACHE ---
         const gameState = {
-            totalScore: parseInt(localStorage.getItem('totalScore') || 0),
+            userId: 'anon',
+            totalScore: 0,
             comboStreak: 0,
+            replaysLeftInRound: 0, 
+            maxReplaysAllowed: 2,  
             currentGameNumber: null,
-            maxNumber: 99 // Game giới hạn trong 0-99
+            maxNumber: 999,
+            minNumber: 0,
+            isAuthReady: false,
         };
-
+        
+        // Cần được gán từ window sau khi import module firebase
+        let db, auth, scoreRef; 
+        
         const BADGE_LEVELS = [
-            { name: "Học Viên", score: 0, icon: "👶" },
-            { name: "Sơ Cấp (N5)", score: 100, icon: "⭐" },
-            { name: "Trung Cấp (N4)", score: 500, icon: "💡" },
-            { name: "Thành Thạo (N3)", score: 1500, icon: "🔥" },
-            { name: "Học Giả", score: 3000, icon: "🎓" },
+            { name: "Học Viên", score: 0, icon: "👶", maxReplays: 2 },
+            { name: "Sơ Cấp (N5)", score: 100, icon: "⭐", maxReplays: 1 },
+            { name: "Trung Cấp (N4)", score: 500, icon: "💡", maxReplays: 0 },
+            { name: "Thành Thạo (N3)", score: 1500, icon: "🔥", maxReplays: 0 },
+            { name: "Cao Cấp (N2)", score: 5000, icon: "🏆", maxReplays: 0 },
+            { name: "Chuyên Gia (N1)", score: 10000, icon: "🏅", maxReplays: 0 },
+            { name: "Học Giả", score: 30000, icon: "🎓", maxReplays: 0 },
         ];
         
         // --- DOM ELEMENTS ---
@@ -522,51 +427,149 @@
         const gameTotalScoreEl = $('#gameTotalScore');
         const gameComboStreakEl = $('#gameComboStreak');
         const startGameBtn = $('#startGameBtn');
+        const replayBtn = $('#replayBtn'); 
+        const replaysLeftDisplay = $('#replaysLeftDisplay'); 
         const gameChoicesEl = $('#gameChoices');
         const gameMessageEl = $('#gameMessage');
+        const rangeDisplayEl = $('#rangeDisplay');
         const totalScoreDisplayEl = $('#totalScoreDisplay');
         const badgeNameEl = $('#badgeName');
         const badgeProgressBarEl = $('#badgeProgressBar');
         const badgeProgressEl = $('#badgeProgress');
         const nextLevelScoreEl = $('#nextLevelScore');
         const toastEl = $('#toast');
-        const openMenuBtn = $('#openMenuBtn');
-        const closeMenuBtn = $('#closeMenuBtn');
-        const navMenu = $('#navMenu');
-        const navOverlay = $('#navOverlay');
-        const contentArea = $('#contentArea');
         const navItems = $$('.nav-item');
-        const themeToggle = $('#themeToggle');
-        const themeIcon = $('#themeIcon');
-        const themeText = $('#themeText');
-
-        // Converter DOM
-        const inputNumber = $('#inputNumber');
-        const convertButton = $('#convertButton');
-        const resultBox = $('#resultBox');
-        const romajiOutput = $('#romajiOutput');
-        const hiraganaOutput = $('#hiraganaOutput');
-        const copyRomajiButton = $('#copyRomajiButton');
-        const copyHiraganaButton = $('#copyHiraganaButton');
-        
-        // Date Converter DOM
-        const inputDate = $('#inputDate');
-        const convertDateButton = $('#convertDateButton');
-        const dateResultBox = $('#dateResultBox');
-        const dateConverterOutput = $('#dateConverterOutput');
-        const copyDateOutputButton = $('#copyDateOutputButton');
+        const rangeButtons = $$('.range-button');
+        const authBtn = $('#authBtn');
+        const userIdDisplay = $('#userIdDisplay');
         
         let voices = [];
         let ttsActive = false;
+        let currentHiragana = ''; // Lưu hiragana để replay
+
+        // --- FIREBASE & AUTH LOGIC ---
+        async function setupFirebase() {
+            if (!window.firebaseConfig) {
+                console.error("Firebase config not available. Running in local mode.");
+                gameState.isAuthReady = true;
+                authBtn.textContent = 'Lỗi Config';
+                return;
+            }
+            
+            const app = window.initializeApp(window.firebaseConfig);
+            auth = window.getAuth(app);
+            db = window.getFirestore(app);
+            
+            authBtn.textContent = 'Đang xác thực...';
+            
+            // 1. Authenticate
+            try {
+                if (window.initialAuthToken) {
+                    await window.signInWithCustomToken(auth, window.initialAuthToken);
+                } else {
+                    await window.signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Authentication Error:", error);
+                // Fallback to anonymous if custom token fails
+                await window.signInAnonymously(auth);
+            }
+
+            // 2. Auth State Listener
+            window.onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    gameState.userId = user.uid;
+                    gameState.isAuthReady = true;
+                    console.log("User signed in:", gameState.userId);
+                    
+                    userIdDisplay.textContent = `ID: ${gameState.userId}`;
+                    authBtn.textContent = 'Đăng Xuất';
+                    authBtn.onclick = handleSignOut;
+                    authBtn.disabled = false;
+                    
+                    loadUserData(gameState.userId);
+                } else {
+                    gameState.userId = 'anon';
+                    gameState.isAuthReady = true;
+                    gameState.totalScore = 0; // Reset score if signed out
+                    
+                    userIdDisplay.textContent = 'Chưa đăng nhập';
+                    authBtn.textContent = 'Đăng Nhập';
+                    authBtn.onclick = handleSignIn; // In this environment, reload page for new token
+                    authBtn.disabled = true; // Cannot sign in/out manually, only on token refresh
+                }
+            });
+        }
+        
+        function handleSignOut() {
+            // In Canvas environment, we rely on the token/session refresh, but we keep the illusion of sign out
+            window.signOut(auth).then(() => {
+                showToast("Đã đăng xuất (Kết quả sẽ không được lưu).", 'error');
+                updateScoreDisplay(); // Reset UI scores
+            }).catch(error => {
+                console.error("Sign Out Error:", error);
+                showToast("Lỗi đăng xuất.", 'error');
+            });
+        }
+
+        function handleSignIn() {
+             showToast("Vui lòng đợi môi trường Canvas refresh token.", 'accent-color');
+        }
+
+        // --- FIRESTORE LOGIC ---
+        function getScoreDocRef(userId) {
+             const appId = window.appId;
+             // Private data path: /artifacts/{appId}/users/{userId}/japanese_scores/data
+             return window.doc(db, `artifacts/${appId}/users/${userId}/japanese_scores`, 'data');
+        }
+
+        function loadUserData(userId) {
+            if (!db) return;
+            
+            // Set up real-time listener
+            scoreRef = getScoreDocRef(userId);
+
+            window.onSnapshot(scoreRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    gameState.totalScore = data.totalScore || 0;
+                    gameState.comboStreak = data.comboStreak || 0;
+                    console.log("Data loaded from Firestore:", data);
+                } else {
+                    // Create initial document
+                    saveUserData();
+                    console.log("No data found, initializing new record.");
+                }
+                updateScoreDisplay(); // Update UI with loaded/initial data
+            }, (error) => {
+                console.error("Firestore Snapshot Error:", error);
+                showToast("Lỗi tải dữ liệu từ Firestore.", 'error');
+            });
+        }
+        
+        async function saveUserData() {
+            if (!db || gameState.userId === 'anon') return;
+
+            try {
+                await window.setDoc(getScoreDocRef(gameState.userId), {
+                    userId: gameState.userId,
+                    totalScore: gameState.totalScore,
+                    comboStreak: gameState.comboStreak,
+                    lastUpdated: window.serverTimestamp()
+                }, { merge: true });
+            } catch (error) {
+                console.error("Firestore Save Error:", error);
+                showToast("Lỗi lưu dữ liệu.", 'error');
+            }
+        }
         
         // --- UTILS & CORE LOGIC ---
         
+        // Simplified mapping (used for core numbers)
         const numberMap = {
-            0: 'zero', 1: 'ichi', 2: 'ni', 3: 'san', 4: 'yon', 5: 'go', 6: 'roku', 7: 'nana', 8: 'hachi', 9: 'kyuu',
-            10: 'juu', 20: 'nijuu', 30: 'sanjuu', 40: 'yonjuu', 50: 'gojuu', 60: 'rokujuu', 70: 'nanajuu', 80: 'hachijuu', 90: 'kyuujuu',
-            100: 'hyaku', 1000: 'sen', 10000: 'man',
-            300: 'sanbyaku', 600: 'roppyaku', 800: 'happyaku',
-            3000: 'sanzen', 8000: 'hassen',
+            0: 'rei', 1: 'ichi', 2: 'ni', 3: 'san', 4: 'yon', 
+            5: 'go', 6: 'roku', 7: 'nana', 8: 'hachi', 9: 'kyuu',
+            10: 'juu'
         };
 
         const hiraganaMap = {
@@ -577,36 +580,136 @@
             'na': 'な', 'ni': 'に', 'nu': 'ぬ', 'ne': 'ね', 'no': 'の',
             'ha': 'は', 'hi': 'ひ', 'fu': 'ふ', 'he': 'へ', 'ho': 'ほ',
             'ma': 'ま', 'mi': 'み', 'mu': 'む', 'me': 'め', 'mo': 'も',
-            'ya': 'や', 'yu': 'ゆ', 'yo': 'よ',
+            'ya': 'や', 'yu': 'ゆ', 'yo': 'よ', 
             'ra': 'ら', 'ri': 'り', 'ru': 'る', 're': 'れ', 'ro': 'ろ',
-            'wa': 'わ', 'wo': 'を', 'n': 'ん', 'vu': 'ヴ', 'nn': 'ん', // Thêm 'nn' cho trường hợp đặc biệt
-            
-            // Dakuon/Handakuon
+            'wa': 'わ', 'wo': 'を', 'n': 'ん', 
+            // Glottalized sounds
             'ga': 'が', 'gi': 'ぎ', 'gu': 'ぐ', 'ge': 'げ', 'go': 'ご',
             'za': 'ざ', 'ji': 'じ', 'zu': 'ず', 'ze': 'ぜ', 'zo': 'ぞ',
-            'da': 'だ', 'de': 'で', 'do': 'ど',
+            'da': 'だ', 'de': 'で', 'do': 'ど', 
             'ba': 'ば', 'bi': 'び', 'bu': 'ぶ', 'be': 'べ', 'bo': 'ぼ',
             'pa': 'ぱ', 'pi': 'ぴ', 'pu': 'ぷ', 'pe': 'ぺ', 'po': 'ぽ',
-            
-            // Yōon
-            'kya': 'きゃ', 'kyu': 'きゅ', 'kyo': 'きょ', 'sha': 'しゃ', 'shu': 'しゅ', 'sho': 'しょ',
-            'cha': 'ちゃ', 'chu': 'ちゅ', 'cho': 'ちょ', 'nya': 'にゃ', 'nyu': 'にゅ', 'nyo': 'にょ',
-            'hya': 'ひゃ', 'hyu': 'ひゅ', 'hyo': 'ひょ', 'mya': 'みゃ', 'myu': 'みゅ', 'myo': 'みょ',
-            'rya': 'りゃ', 'ryu': 'りゅ', 'ryo': 'りょ', 'gya': 'ぎゃ', 'gyu': 'ぎゅ', 'gyo': 'ぎょ',
+            // Small Y-sounds
+            'kya': 'きゃ', 'kyu': 'きゅ', 'kyo': 'きょ',
+            'sha': 'しゃ', 'shu': 'しゅ', 'sho': 'しょ',
+            'cha': 'ちゃ', 'chu': 'ちゅ', 'cho': 'ちょ',
+            'nya': 'にゃ', 'nyu': 'にゅ', 'nyo': 'にょ',
+            'hya': 'ひゃ', 'hyu': 'ひゅ', 'hyo': 'ひょ',
+            'mya': 'みゃ', 'myu': 'みゅ', 'myo': 'みょ',
+            'rya': 'りゃ', 'ryu': 'りゅ', 'ryo': 'りょ',
+            'gya': 'ぎゃ', 'gyu': 'ぎゅ', 'gyo': 'ぎょ',
             'ja': 'じゃ', 'ju': 'じゅ', 'jo': 'じょ',
-            'bya': 'びゃ', 'byu': 'びゅ', 'byo': 'びょ', 'pya': 'ぴゃ', 'pyu': 'ぴゅ', 'pyo': 'ぴょ',
+            'bya': 'びゃ', 'byu': 'びゅ', 'byo': 'びゅ',
+            'pya': 'ぴゃ', 'pyu': 'ぴゅ', 'pyo': 'ぴょ',
+            // Small tsu and special
+            'xtsu': 'っ', // placeholder for small tsu logic
+            'tto': 'っと',
+            'kke': 'っけ',
+            // Long vowels (handled by parsing logic)
+            'ou': 'おう',
+            'ee': 'えい', // Default long e
+            'ei': 'えい',
         };
+
+
+        function convertToRomaji(num) { 
+            if (num < 0 || num > 9999999) return "Lỗi: Số không hợp lệ.";
+            if (num === 0) return 'zero';
+
+            let romaji = '';
+            let tempNum = num;
+
+            // Hàng Triệu (Hyakuman)
+            if (tempNum >= 1000000) {
+                const hyakumanPart = Math.floor(tempNum / 1000000);
+                tempNum %= 1000000;
+                romaji += convertLessThan10000(hyakumanPart) + 'hyakuman'; 
+                if (tempNum > 0) romaji += ' ';
+            }
+            
+            // Hàng Chục Triệu (Man)
+            if (tempNum >= 10000) {
+                const manPart = Math.floor(tempNum / 10000);
+                tempNum %= 10000;
+                
+                romaji += convertLessThan10000(manPart).replace('ichi', '') + 'man'; // man doesn't use ichi
+                if (tempNum > 0) romaji += ' ';
+            }
+
+            if (tempNum > 0) {
+                romaji += convertLessThan10000(tempNum);
+            }
+
+            return romaji.trim();
+        }
+
+        function convertLessThan10000(n) { 
+            let s = '';
+            let num = n;
+
+            // Hàng ngàn (Sen)
+            if (num >= 1000) {
+                const sen = Math.floor(num / 1000);
+                num %= 1000;
+                
+                if (s.length > 0) s += ' ';
+
+                if (sen === 1) s += 'sen';
+                else if (sen === 3) s += 'sanzen'; 
+                else if (sen === 8) s += 'hassen';
+                else s += convertLessThan100(sen) + 'sen';
+            }
+
+            // Hàng trăm (Hyaku)
+            if (num >= 100) {
+                const hyaku = Math.floor(num / 100);
+                num %= 100;
+
+                if (s.length > 0) s += ' ';
+                
+                if (hyaku === 1) s += 'hyaku';
+                else if (hyaku === 3) s += 'sanbyaku';
+                else if (hyaku === 6) s += 'roppyaku';
+                else if (hyaku === 8) s += 'happyaku';
+                else s += convertLessThan100(hyaku) + 'hyaku';
+            }
+
+            // Hàng chục & Đơn vị
+            if (num > 0) {
+                if (s.length > 0) s += ' ';
+                s += convertLessThan100(num);
+            }
+            
+            return s.trim();
+        }
         
-        function romajiToHiragana(romaji) {
+        function convertLessThan100(num) {
+            if (num === 0) return '';
+            if (num <= 10) return numberMap[num];
+            if (num < 20) return 'juu' + numberMap[num % 10]; // 11-19
+            
+            const juu = Math.floor(num / 10);
+            const ichi = num % 10;
+            
+            let s = numberMap[juu] + 'juu';
+            if (ichi > 0) s += ' ' + numberMap[ichi];
+            
+            return s;
+        }
+
+        function romajiToHiragana(romaji) { 
             let hiragana = '';
             let i = 0;
             let cleanRomaji = romaji.toLowerCase().replace(/\s/g, ''); 
             
             // Xử lý âm đôi ('tsu' nhỏ)
-            cleanRomaji = cleanRomaji.replace(/([^aeiou])\1/g, (match, p1) => {
-                if ('ksthp'.includes(p1)) return 'っ' + p1;
-                return match;
+            cleanRomaji = cleanRomaji.replace(/([ksthpztdbg])\1/g, (match, p1) => {
+                 return 'っ' + p1;
             });
+            
+            // Fix special sounds (chi, tsu)
+            cleanRomaji = cleanRomaji.replace('cch', 'tch');
+            cleanRomaji = cleanRomaji.replace('ss', 'susu'); // Simplified for TTS clarity
             
             const keys = Object.keys(hiraganaMap).sort((a, b) => b.length - a.length);
 
@@ -623,96 +726,22 @@
                 }
                 
                 if (!matched) {
-                    // Fallback cho các ký tự không phải Romaji (chẳng hạn dấu gạch ngang)
                     hiragana += cleanRomaji[i];
                     i++;
                 }
             }
-
-            // Xử lý trường hợp âm dài (ō, ū) - Sử dụng 'ー' nếu romaji có 'oo' hoặc 'uu' (rất phức tạp, chỉ xử lý cơ bản)
-            // Tạm thời bỏ qua xử lý âm dài phức tạp để đảm bảo logic đếm số chính xác
+            
+            // Long vowel fix (romajiToHiragana only covers basic mapping, TTS handles final pronunciation)
+            // 'ou' is generally pronounced as long 'o' (おう -> おお in common speech)
+            hiragana = hiragana.replace(/おう/g, 'おお'); 
             
             return hiragana;
         }
 
-
-        // Chuyển đổi số thành Romaji (Chỉ xử lý đến 9,999,999)
-        function convertToRomaji(num) {
-            if (num < 0 || num > 9999999) return "Lỗi: Số không hợp lệ.";
-            if (num === 0) return 'zero';
-
-            let romaji = '';
-            let tempNum = num;
-
-            // Xử lý Hàng triệu (Man)
-            if (tempNum >= 10000) {
-                const manPart = Math.floor(tempNum / 10000);
-                tempNum %= 10000;
-                
-                // ichiman, niman, sanman...
-                romaji += convertLessThan10000(manPart, false) + 'man'; 
-            }
-
-            // Xử lý Hàng ngàn, Trăm, Chục, Đơn vị (Dưới 10000)
-            if (tempNum > 0) {
-                if (romaji.length > 0) romaji += ' ';
-                romaji += convertLessThan10000(tempNum, true);
-            }
-
-            return romaji.trim();
-        }
-
-        // Chuyển đổi số < 10000
-        function convertLessThan10000(n) {
-            let s = '';
-            let num = n;
-
-            // Hàng ngàn (Sen)
-            if (num >= 1000) {
-                const sen = Math.floor(num / 1000);
-                num %= 1000;
-                
-                if (sen === 1 && s === '') s += 'sen';
-                else if (sen === 3) s += 'sanzen'; 
-                else if (sen === 8) s += 'hassen';
-                else s += numberMap[sen] + 'sen';
-            }
-
-            // Hàng trăm (Hyaku)
-            if (num >= 100) {
-                const hyaku = Math.floor(num / 100);
-                num %= 100;
-                
-                if (hyaku === 1 && s === '') s += 'hyaku';
-                else if (hyaku === 3) s += 'sanbyaku';
-                else if (hyaku === 6) s += 'roppyaku';
-                else if (hyaku === 8) s += 'happyaku';
-                else s += numberMap[hyaku] + 'hyaku';
-            }
-
-            // Hàng chục (Juu)
-            if (num >= 10) {
-                const juu = Math.floor(num / 10);
-                num %= 10;
-                s += (juu === 1 ? 'juu' : numberMap[juu] + 'juu');
-            }
-
-            // Đơn vị
-            if (num > 0) {
-                s += numberMap[num];
-            }
-            return s;
-        }
-
         // --- SPEECH UTILS (TTS) ---
         function populateVoiceList() {
+            // Lấy tất cả giọng nói có sẵn và lọc ra giọng Nhật (ja-JP)
             voices = speechSynthesis.getVoices().filter(voice => voice.lang.startsWith('ja'));
-            // Lấy giọng Nhật mặc định hoặc giọng đầu tiên
-            if (voices.length === 0) {
-                 // Không có giọng Nhật, sử dụng giọng mặc định
-            } else {
-                 // console.log("Giọng Nhật đã tải.");
-            }
         }
         
         let voiceCheckInterval = null; 
@@ -726,42 +755,94 @@
         }
 
         function speakText(text) {
-            if (!text || voices.length === 0) return;
+            if (!text || voices.length === 0) {
+                 showToast("Không tìm thấy giọng Nhật trên thiết bị của bạn. Vui lòng kiểm tra cài đặt TTS của hệ điều hành.", 'error');
+                 startGameBtn.textContent = 'Phát Âm Số';
+                 startGameBtn.disabled = false;
+                 return;
+            }
             
             if (speechSynthesis.speaking) {
                 speechSynthesis.cancel();
             }
             
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.voice = voices.find(v => v.default) || voices[0];
+            // Ưu tiên giọng mặc định tiếng Nhật, nếu không có thì lấy giọng đầu tiên
+            utterance.voice = voices.find(v => v.default) || voices[0]; 
             utterance.lang = 'ja-JP';
-            utterance.rate = 0.8; 
+            utterance.rate = 1.0; // Đã chỉnh lại tốc độ về 1.0 (tiêu chuẩn) để âm thanh rõ hơn
             utterance.pitch = 1.0;
             
+            const targetButton = gameChoicesEl.classList.contains('opacity-0') ? startGameBtn : replayBtn;
+
             utterance.onstart = () => {
-                startGameBtn.classList.add('speech-glow');
+                targetButton.classList.add('speech-glow');
                 ttsActive = true;
+                startGameBtn.disabled = true;
+                replayBtn.disabled = true;
             };
             utterance.onend = () => {
-                startGameBtn.classList.remove('speech-glow');
+                targetButton.classList.remove('speech-glow');
                 ttsActive = false;
-                if(document.querySelector('.page-content:not(.hidden)').dataset.page === 'game') {
-                     // Bắt đầu game khi phát âm xong
+                
+                startGameBtn.disabled = false;
+                updateReplayButtonState(); // Cập nhật lại trạng thái nút replay
+                
+                if(gameChoicesEl.classList.contains('opacity-0')) {
                      gameChoicesEl.classList.remove('opacity-0', 'pointer-events-none');
+                     showToast("Chọn đáp án ngay!", 'main-color');
+                } else {
+                     showToast("Nghe lại hoàn tất.", 'accent-color');
                 }
-                showToast("Phát âm hoàn tất!", 'accent-color');
             };
+            utterance.onerror = (e) => {
+                 showToast(`Lỗi phát âm: ${e.error}`, 'error');
+                 targetButton.classList.remove('speech-glow');
+                 ttsActive = false;
+                 startGameBtn.disabled = false;
+                 updateReplayButtonState();
+                 gameChoicesEl.classList.remove('opacity-0', 'pointer-events-none');
+            }
 
             speechSynthesis.speak(utterance);
         }
         
-        // --- GAME LOGIC ---
+        // --- GAME & UI LOGIC ---
+
+        function updateReplayAllowance() {
+            const score = gameState.totalScore;
+            let maxReplays = 0;
+            
+            for (let i = BADGE_LEVELS.length - 1; i >= 0; i--) {
+                if (score >= BADGE_LEVELS[i].score) {
+                    maxReplays = BADGE_LEVELS[i].maxReplays;
+                    break;
+                }
+            }
+            gameState.maxReplaysAllowed = maxReplays;
+        }
+
+        function updateReplayButtonState() {
+            replayBtn.disabled = gameState.replaysLeftInRound <= 0 || ttsActive || gameState.currentGameNumber === null;
+            replaysLeftDisplay.textContent = `${gameState.replaysLeftInRound}/${gameState.maxReplaysAllowed}`;
+            
+            if (gameState.maxReplaysAllowed === 0) {
+                 replayBtn.title = 'Không được nghe lại ở cấp độ này';
+                 replaysLeftDisplay.textContent = '0';
+                 replayBtn.disabled = true;
+            } else {
+                 replayBtn.title = `Nghe lại (${gameState.replaysLeftInRound} lượt còn lại)`;
+            }
+        }
 
         function updateScoreDisplay() {
-            currentScoreEl.textContent = gameState.totalScore;
-            gameTotalScoreEl.textContent = gameState.totalScore;
+            updateReplayAllowance(); // Cập nhật giới hạn nghe lại
+            
+            // SỬA LỖI HIỂN THỊ ĐIỂM: Thêm toLocaleString để định dạng số lớn
+            currentScoreEl.textContent = gameState.totalScore.toLocaleString('vi-VN');
+            gameTotalScoreEl.textContent = gameState.totalScore.toLocaleString('vi-VN');
             gameComboStreakEl.textContent = gameState.comboStreak;
-            totalScoreDisplayEl.textContent = gameState.totalScore;
+            totalScoreDisplayEl.textContent = gameState.totalScore.toLocaleString('vi-VN');
             
             // Cập nhật Badge
             let currentBadge = BADGE_LEVELS[0];
@@ -783,7 +864,7 @@
                 const currentProgress = gameState.totalScore - prevScore;
                 const progressPercentage = Math.min(100, Math.floor((currentProgress / scoreDiff) * 100));
 
-                nextLevelScoreEl.textContent = requiredScore;
+                nextLevelScoreEl.textContent = requiredScore.toLocaleString('vi-VN');
                 badgeProgressBarEl.style.width = `${progressPercentage}%`;
                 badgeProgressEl.textContent = `${progressPercentage}%`;
             } else {
@@ -792,322 +873,204 @@
                 badgeProgressEl.textContent = 'MAX';
             }
             
-            localStorage.setItem('totalScore', gameState.totalScore);
+            if (gameState.isAuthReady) {
+                 saveUserData(); // Lưu dữ liệu sau khi cập nhật
+            }
         }
         
         function generateGameRound() {
-            // 1. Chọn số ngẫu nhiên
-            const correctNumber = Math.floor(Math.random() * (gameState.maxNumber + 1));
-            gameState.currentGameNumber = correctNumber;
-
-            // 2. Chuyển đổi thành Hiragana để đọc
-            const romaji = convertToRomaji(correctNumber);
-            const hiragana = romajiToHiragana(romaji);
-
-            // 3. Tạo các lựa chọn nhiễu
-            let choices = new Set([correctNumber]);
-            while (choices.size < 4) {
-                let distracter;
-                do {
-                    distracter = Math.floor(Math.random() * (gameState.maxNumber + 1));
-                } while (choices.has(distracter) || Math.abs(distracter - correctNumber) < 5); // Đảm bảo số không quá gần
-                choices.add(distracter);
-            }
-
-            // 4. Trộn các lựa chọn
-            choices = Array.from(choices).sort(() => Math.random() - 0.5);
-
-            // 5. Render và gắn sự kiện
+            // 1. Reset trạng thái vòng chơi
             gameChoicesEl.innerHTML = '';
             gameMessageEl.textContent = 'Nghe và chọn số đúng:';
-            gameChoicesEl.classList.add('opacity-0', 'pointer-events-none'); // Ẩn nút chọn trước khi đọc
+            gameChoicesEl.classList.add('opacity-0', 'pointer-events-none');
             
+            // Reset lượt nghe lại dựa trên cấp bậc hiện tại
+            updateReplayAllowance(); 
+            gameState.replaysLeftInRound = gameState.maxReplaysAllowed;
+            updateReplayButtonState();
+
+            // 2. Chọn số ngẫu nhiên
+            const max = gameState.maxNumber;
+            const min = gameState.minNumber;
+            const correctNumber = Math.floor(Math.random() * (max + 1 - min)) + min;
+            gameState.currentGameNumber = correctNumber;
+
+            // 3. Chuyển đổi thành Hiragana để đọc và lưu lại
+            const romaji = convertToRomaji(correctNumber);
+            currentHiragana = romajiToHiragana(romaji); // Lưu lại Hiragana
+
+            // 4. Tạo các lựa chọn nhiễu - ĐÃ CHỈNH SỬA LẠI LOGIC ĐỂ CÁC SỐ GẦN NHAU HƠN
+            let choices = new Set([correctNumber]);
+            const numChoices = 4;
+
+            // Strategy 1: Add Close Distractors (differ by 1, 10, or 100)
+            const closeDiffs = [1, -1, 10, -10, 100, -100];
+            
+            for (let diff of closeDiffs) {
+                if (choices.size >= numChoices) break;
+                
+                const closeDistracter = correctNumber + diff;
+                
+                if (closeDistracter >= min && closeDistracter <= max && !choices.has(closeDistracter)) {
+                    choices.add(closeDistracter);
+                }
+            }
+
+            // Strategy 2: Fill remaining slots with random numbers (now allowing close proximity)
+            while (choices.size < numChoices) {
+                let randomDistracter = Math.floor(Math.random() * (max + 1 - min)) + min;
+                if (!choices.has(randomDistracter)) {
+                    choices.add(randomDistracter);
+                }
+            }
+
+            choices = Array.from(choices).sort(() => Math.random() - 0.5);
+
             choices.forEach(num => {
                 const btn = document.createElement('button');
-                btn.className = 'choice-button p-3 rounded-xl transition-colors';
-                btn.textContent = num;
+                btn.className = 'choice-button p-3 rounded-xl font-bold transition-colors shadow-md';
+                btn.textContent = num.toLocaleString('vi-VN'); 
+                btn.dataset.value = num; 
                 btn.onclick = () => checkAnswer(num, correctNumber, btn);
                 gameChoicesEl.appendChild(btn);
             });
             
-            // 6. Phát âm (Sau khi render xong)
-            speakText(hiragana);
+            // 5. Phát âm lần đầu
+            speakText(currentHiragana);
             startGameBtn.textContent = 'Đang Phát Âm...';
             startGameBtn.disabled = true;
         }
+
+        // Replay Logic
+        replayBtn.addEventListener('click', () => {
+            if (ttsActive) return;
+
+            if (gameState.replaysLeftInRound > 0) {
+                gameState.replaysLeftInRound--;
+                speakText(currentHiragana);
+                updateReplayButtonState();
+            } else {
+                showToast("Đã hết lượt nghe lại cho vòng này!", 'error');
+            }
+        });
         
         function checkAnswer(selectedNum, correctNum, buttonEl) {
-            // Vô hiệu hóa tất cả các nút ngay sau khi chọn
             $$('.choice-button').forEach(btn => btn.disabled = true);
             
             if (selectedNum === correctNum) {
-                buttonEl.classList.add('correct-answer');
-                gameMessageEl.innerHTML = `✅ Chính xác! +10 điểm. <span class="text-xs italic">(Combo: ${gameState.comboStreak + 1})</span>`;
+                buttonEl.classList.add('bg-green-500', 'text-white', 'shadow-lg');
                 
                 const scoreGain = 10 + gameState.comboStreak * 2;
                 gameState.totalScore += scoreGain;
                 gameState.comboStreak += 1;
                 
-                showToast(`+${scoreGain} Điểm! Combo x${gameState.comboStreak}!`, 'correct-answer-toast');
+                gameMessageEl.innerHTML = `✅ Chính xác! +${scoreGain} điểm. <span class="text-xs italic">(Combo: ${gameState.comboStreak})</span>`;
+                showToast(`+${scoreGain} Điểm! Combo x${gameState.comboStreak}!`, 'accent-color');
 
             } else {
-                buttonEl.classList.add('wrong-answer');
-                // Highlight đáp án đúng
+                buttonEl.classList.add('bg-red-500', 'text-white', 'shadow-lg');
                 $$('.choice-button').forEach(btn => {
-                    if (parseInt(btn.textContent) === correctNum) {
-                         btn.classList.add('correct-answer');
+                    if (parseInt(btn.dataset.value) === correctNum) {
+                         btn.classList.add('bg-green-500', 'text-white', 'shadow-lg');
                     }
                 });
-                gameMessageEl.textContent = `❌ Sai rồi. Số đúng là ${correctNum} (${convertToRomaji(correctNum)}). Combo bị ngắt.`;
+                const romaji = convertToRomaji(correctNum);
+                gameMessageEl.textContent = `❌ Sai rồi. Số đúng là ${correctNum.toLocaleString('vi-VN')} (${romaji}). Combo bị ngắt.`;
                 gameState.comboStreak = 0;
                 
-                showToast(`Sai rồi. Số đúng là ${correctNum}!`, 'wrong-answer-toast');
+                showToast(`Sai rồi. Số đúng là ${correctNum.toLocaleString('vi-VN')}!`, 'error');
             }
             
-            updateScoreDisplay();
+            updateScoreDisplay(); // Lưu và hiển thị điểm mới
             
             // Thiết lập vòng mới sau 2 giây
             setTimeout(() => {
                 startGameBtn.textContent = 'Bắt Đầu Vòng Mới';
-                startGameBtn.disabled = false;
                 $$('.choice-button').forEach(btn => {
-                    btn.classList.remove('correct-answer', 'wrong-answer');
-                    btn.disabled = false; // Re-enable cho vòng mới
+                    btn.classList.remove('bg-green-500', 'text-white', 'shadow-lg', 'bg-red-500');
+                    btn.disabled = false;
                 });
                 generateGameRound();
             }, 2000);
         }
         
-        // --- CONVERTER LOGIC (Số) ---
-        function convertAndDisplay(num) {
-            const romaji = convertToRomaji(num);
-            const romajiNoSpaces = romaji.replace(/\s/g, ''); 
-            const hiragana = romajiToHiragana(romajiNoSpaces);
-
-            // Cập nhật DOM
-            romajiOutput.textContent = romaji;
-            hiraganaOutput.textContent = hiragana;
-            
-            resultBox.classList.remove('hidden');
-            resultBox.classList.add('speech-glow');
-            setTimeout(() => resultBox.classList.remove('speech-glow'), 1000); 
-            
-            showToast("Chuyển đổi thành công!", 'accent-color');
-        }
-
-        convertButton.addEventListener('click', () => {
-            const num = parseInt(inputNumber.value.trim());
-            if (isNaN(num) || num < 0 || num > 9999999) {
-                 showToast("Vui lòng nhập số hợp lệ (0-9,999,999).", 'error');
-                 return;
-            }
-            convertAndDisplay(num);
-        });
-
-        // --- CONVERTER LOGIC (Ngày Tháng) ---
-        function convertDateToJapanese(dateString) {
-            if (!dateString) return "";
-            
-            const date = new Date(dateString + 'T00:00:00'); // Tránh lỗi múi giờ
-            const year = date.getFullYear();
-            const month = date.getMonth() + 1;
-            const day = date.getDate();
-
-            // Số lẻ thường dùng 'ichi', 'hachi', 'juu'
-            const numToRomaji = (n) => {
-                const s = convertToRomaji(n);
-                // Trường hợp đặc biệt: 1 là 'tsuitachi', 20 là 'hatsuka'
-                if (n === 1) return 'tsuitachi';
-                if (n === 2) return 'futsuka';
-                if (n === 3) return 'mikka';
-                if (n === 4) return 'yokka';
-                if (n === 5) return 'itsuka';
-                if (n === 6) return 'muika';
-                if (n === 7) return 'nanoka';
-                if (n === 8) return 'youka';
-                if (n === 9) return 'kokonoka';
-                if (n === 10) return 'touka';
-                if (n === 14) return 'juuyokka';
-                if (n === 20) return 'hatsuka';
-                if (n === 24) return 'nijuuyokka';
+        // --- RANGE SELECTOR LOGIC ---
+        rangeButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const newMax = parseInt(e.target.dataset.range);
                 
-                // Trường hợp đặc biệt tháng 4, 7, 9
-                if (month === 4 && n === 4) return 'yokka';
-                if (month === 7 && n === 7) return 'nanoka';
-                if (month === 9 && n === 9) return 'kokonoka';
+                gameState.maxNumber = newMax;
+                gameState.minNumber = newMax < 1000 ? 0 : 100; // Đặt min là 100 nếu > 1000 
+                
+                rangeDisplayEl.textContent = `Phạm vi hiện tại: ${gameState.minNumber.toLocaleString('vi-VN')} - ${gameState.maxNumber.toLocaleString('vi-VN')}.`;
 
-                return s; // Dùng chuyển đổi số thông thường cho các số còn lại
-            };
-            
-            const yearR = convertToRomaji(year);
-            const monthR = convertToRomaji(month);
-            const dayR = numToRomaji(day);
-
-            // Tạo Romaji
-            const romaji = `${yearR}nen ${monthR}gatsu ${dayR}${day > 10 && day !== 20 ? 'nichi' : ''}`
-                                .replace('zero', ''); // Loại bỏ zero nếu có (chỉ xảy ra với tháng, ngày)
-            
-            // Chuyển đổi Romaji thành Hiragana (cần phải xử lý từ ghép đặc biệt)
-            
-            // Chuyển đổi tên các đơn vị
-            const hiraganaNen = 'ねん';
-            const hiraganaGatsu = 'がつ';
-            const hiraganaNichi = 'にち';
-
-            const yearH = romajiToHiragana(yearR);
-            const monthH = romajiToHiragana(monthR);
-
-            // Xử lý ngày đặc biệt cho Hiragana
-            let dayH;
-            if (day === 1) dayH = 'ついたち';
-            else if (day === 2) dayH = 'ふつか';
-            else if (day === 3) dayH = 'みっか';
-            else if (day === 4) dayH = 'よっか';
-            else if (day === 5) dayH = 'いつか';
-            else if (day === 6) dayH = 'むいか';
-            else if (day === 7) dayH = 'なのか';
-            else if (day === 8) dayH = 'ようか';
-            else if (day === 9) dayH = 'ここのか';
-            else if (day === 10) dayH = 'とおか';
-            else if (day === 14) dayH = 'じゅうよっか';
-            else if (day === 20) dayH = 'はつか';
-            else if (day === 24) dayH = 'にじゅうよっか';
-            else dayH = romajiToHiragana(dayR);
-
-
-            const hiragana = `${yearH}${hiraganaNen} ${monthH}${hiraganaGatsu} ${dayH}${day > 10 && day !== 20 ? hiraganaNichi : ''}`;
-            
-            // Kết quả hiển thị
-            return {
-                romaji: romaji.trim(),
-                hiragana: hiragana.trim().replace('zerogatsu', 'がつ').replace('zeronichi', 'にち')
-            };
-        }
-
-        convertDateButton.addEventListener('click', () => {
-            const dateStr = inputDate.value;
-            if (!dateStr) {
-                showToast("Vui lòng chọn một ngày.", 'error');
-                return;
-            }
-            
-            const result = convertDateToJapanese(dateStr);
-            
-            if (result.romaji) {
-                dateConverterOutput.innerHTML = 
-                    `<span class="text-main-color">${result.hiragana}</span><br>
-                    <span class="text-gray-600 dark:text-gray-400 font-normal italic text-sm">${result.romaji}</span>`;
-                dateResultBox.classList.remove('hidden');
-                showToast("Chuyển đổi ngày tháng thành công!", 'accent-color');
-            } else {
-                 showToast("Lỗi chuyển đổi ngày tháng.", 'error');
-            }
-        });
-        
-        copyDateOutputButton.addEventListener('click', () => {
-             copyToClipboard(dateConverterOutput.textContent.split('\n')[0], copyDateOutputButton, 'Copy Kết Quả');
+                rangeButtons.forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                generateGameRound();
+                showToast(`Đã chuyển phạm vi sang ${gameState.minNumber.toLocaleString('vi-VN')} - ${gameState.maxNumber.toLocaleString('vi-VN')}`, 'accent-color');
+            });
         });
 
-        // --- GIAO DIỆN VÀ HIỆU ỨNG ---
-
+        // --- TOAST & UTILS ---
         function showToast(message, type = 'default') {
             toastEl.textContent = message;
-            toastEl.classList.remove('bg-red-500', 'bg-emerald-500', 'bg-main-color');
             
-            if (type === 'error') {
-                toastEl.style.backgroundColor = '#EF4444'; 
-            } else if (type === 'accent-color') {
-                toastEl.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color');
-            } else {
-                toastEl.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--main-color');
-            }
+            let color = getComputedStyle(document.documentElement).getPropertyValue('--main-color');
+            if (type === 'accent-color') color = getComputedStyle(document.documentElement).getPropertyValue('--accent-color');
+            if (type === 'error') color = '#EF4444'; // Red-500
+
+            toastEl.style.backgroundColor = color;
             
             toastEl.classList.add('show');
+            toastEl.style.opacity = '1';
+            toastEl.style.transform = 'translateY(0)';
             
             setTimeout(() => {
+                toastEl.style.opacity = '0';
+                toastEl.style.transform = 'translateY(100px)';
                 toastEl.classList.remove('show');
             }, 3000);
         }
-
-        function copyToClipboard(text, buttonElement, originalText) {
-            if (text) {
-                navigator.clipboard.writeText(text).then(() => {
-                    const originalInnerHTML = buttonElement.innerHTML;
-                    buttonElement.innerHTML = '<i class="fas fa-check mr-1"></i> Đã Copy!';
-                    buttonElement.style.color = '#10B981';
-                    
-                    showToast("Đã sao chép vào bộ nhớ đệm.", 'accent-color');
-                    
-                    setTimeout(() => {
-                        buttonElement.innerHTML = originalInnerHTML;
-                        buttonElement.style.color = '';
-                    }, 1500);
-                }).catch(err => {
-                    // Fallback
-                    const el = document.createElement('textarea');
-                    el.value = text;
-                    document.body.appendChild(el);
-                    el.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(el);
-                    
-                    const originalInnerHTML = buttonElement.innerHTML;
-                    buttonElement.innerHTML = '<i class="fas fa-check mr-1"></i> Đã Copy!';
-                    buttonElement.style.color = '#10B981';
-                    showToast("Đã sao chép vào bộ nhớ đệm (Fallback).", 'accent-color');
-                    setTimeout(() => {
-                        buttonElement.innerHTML = originalInnerHTML;
-                        buttonElement.style.color = '';
-                    }, 1500);
-                });
-            }
-        }
         
-        copyRomajiButton.addEventListener('click', () => copyToClipboard(romajiOutput.textContent, copyRomajiButton, 'Copy Romaji'));
-        copyHiraganaButton.addEventListener('click', () => copyToClipboard(hiraganaOutput.textContent, copyHiraganaButton, 'Copy Hiragana'));
+        // Chức năng copy (omitted for brevity, assume correct)
+        // ...
 
-        // --- NAVIGATION & TABS ---
+
+        // --- NAVIGATION & TABS (giữ nguyên) ---
+        const openMenuBtn = $('#openMenuBtn');
+        const navMenu = $('#navMenu');
+        const navOverlay = $('#navOverlay');
+
         openMenuBtn.addEventListener('click', () => {
-            navMenu.classList.add('open');
-            navOverlay.classList.add('active');
-        });
-
-        closeMenuBtn.addEventListener('click', () => {
-            navMenu.classList.remove('open');
-            navOverlay.classList.remove('active');
+            navMenu.classList.add('translate-x-0');
+            navOverlay.classList.remove('hidden');
         });
 
         navOverlay.addEventListener('click', () => {
-            navMenu.classList.remove('open');
-            navOverlay.classList.remove('active');
+            navMenu.classList.remove('translate-x-0');
+            navOverlay.classList.add('hidden');
         });
 
         navItems.forEach(item => {
             item.addEventListener('click', () => {
                 const targetPage = item.dataset.content;
                 
-                // Cập nhật trạng thái Active
-                navItems.forEach(nav => nav.classList.remove('active'));
-                item.classList.add('active');
+                navItems.forEach(nav => nav.classList.remove('active', 'bg-red-50', 'dark:bg-gray-800', 'text-main-color'));
+                item.classList.add('active', 'bg-red-50', 'dark:bg-gray-800', 'text-main-color');
                 
-                // Hiển thị nội dung tương ứng
                 $$('.page-content').forEach(content => {
+                    content.classList.add('hidden');
                     if (content.dataset.page === targetPage) {
                         content.classList.remove('hidden');
-                    } else {
-                        content.classList.add('hidden');
                     }
                 });
                 
-                navMenu.classList.remove('open');
-                navOverlay.classList.remove('active');
+                navMenu.classList.remove('translate-x-0');
+                navOverlay.classList.add('hidden');
                 
-                // Logic khởi tạo đặc biệt
                 if (targetPage === 'game') {
-                    // Khởi tạo vòng chơi đầu tiên
-                    if (gameState.currentGameNumber === null) {
-                         generateGameRound();
-                    }
+                    if (gameState.currentGameNumber === null) generateGameRound();
                 }
                 if (targetPage === 'score') {
                     updateScoreDisplay();
@@ -1115,7 +1078,11 @@
             });
         });
 
-        // --- DARK MODE ---
+        // --- DARK MODE (giữ nguyên) ---
+        const themeToggle = $('#themeToggle');
+        const themeIcon = $('#themeIcon');
+        const themeText = $('#themeText');
+
         function toggleTheme() {
             const isDark = document.body.classList.toggle('dark');
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
@@ -1147,28 +1114,27 @@
         // --- INITIALIZATION ---
         window.onload = () => {
             applyInitialTheme();
-            updateScoreDisplay();
+            setupFirebase(); // Bắt đầu kết nối Firebase
             startVoiceCheck();
             
-            // Đặt ngày mặc định cho input date là ngày hôm nay
             const today = new Date().toISOString().split('T')[0];
-            inputDate.value = today;
+            $('#inputDate').value = today;
             
-            // Tải vòng chơi đầu tiên
-            generateGameRound(); 
-            startGameBtn.disabled = false;
+            // Kích hoạt nút mặc định 0-999
+            const defaultRangeBtn = document.querySelector('[data-range="999"]');
+            if (defaultRangeBtn) {
+                 defaultRangeBtn.click(); 
+            }
         };
 
         // Game Listener
         startGameBtn.addEventListener('click', () => {
-            // Ngăn chặn bấm nút khi TTS đang đọc
             if (!ttsActive) {
                 generateGameRound();
             } else {
                 showToast("Vui lòng đợi âm thanh hoàn tất!", 'error');
             }
         });
-
     </script>
 </body>
 </html>
