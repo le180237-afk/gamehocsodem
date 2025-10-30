@@ -44,28 +44,42 @@
     <style>
         /* Thiết lập biến CSS cho Theme IT E6-HUST */
         :root {
-            /* HUST/IT E6 Theme */
-            --main-color: #BC002D; /* HUST Red */
-            --accent-color: #1F2937; /* Navy Blue - Techy */
-            --bg-body: #f4f7fa; /* Light Gray/Blueish */
+            /* HUST Red: #BC002D, IT/Tech Blue: #1F2937 (Slate 800) */
+            --main-color: #BC002D; 
+            --accent-color: #3B82F6; /* Blue 500 - Tech Accent */
+            --bg-body: #f4f7fa; 
             --bg-container: rgba(255, 255, 255, 0.98);
             --bg-option: #FFFFFF;
             --text-primary: #1F2937;
             --text-secondary: #4B5563;
             --border-color: #D1D5DB;
-            --score-color: #FFD700; /* Gold */
+            --score-color: #FFD700; 
         }
 
-        /* Dark Theme */
+        /* Dark Theme - Cyber/Tech Vibe */
         .dark {
-            --bg-body: #0f172a; /* Slate 900 */
-            --bg-container: rgba(30, 41, 59, 0.98); /* Slate 800 */
-            --bg-option: #1e293b; 
-            --text-primary: #F3F4F6;
+            --bg-body: #0a0e1c; /* Almost Black/Navy */
+            --bg-container: rgba(17, 24, 39, 0.95); /* Gray 900 */
+            --bg-option: #1f2937; /* Gray 800 */
+            --text-primary: #E5E7EB; /* Light Gray */
             --text-secondary: #9CA3AF;
-            --border-color: #334155;
-            --main-color: #FCA5A5; /* Light Red */
-            --accent-color: #93C5FD; /* Light Blue */
+            --border-color: #374151; /* Gray 700 */
+            --main-color: #F87171; /* Red 400 */
+            --accent-color: #60A5FA; /* Blue 400 - Neon Glow */
+        }
+        
+        /* Cyber Grid Background (New) */
+        .cyber-grid-overlay {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: 50px 50px;
+            opacity: 0.1;
+            z-index: -1;
+            pointer-events: none;
         }
 
         body {
@@ -82,8 +96,24 @@
         }
         
         .dark {
-            background-image: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            /* Dark body gradient */
+            background-image: linear-gradient(135deg, #10172A 0%, #030712 100%);
         }
+        
+        .dark .cyber-grid-overlay {
+            background-image: 
+                linear-gradient(to right, var(--border-color) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--border-color) 1px, transparent 1px);
+            opacity: 0.15;
+        }
+
+        .light .cyber-grid-overlay {
+             background-image: 
+                linear-gradient(to right, var(--border-color) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--border-color) 1px, transparent 1px);
+            opacity: 0.05;
+        }
+
 
         .app-container {
             max-width: 600px;
@@ -91,7 +121,7 @@
             padding: 30px;
             background-color: var(--bg-container); 
             border-radius: 24px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1), 0 0 15px rgba(188, 0, 45, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2), 0 0 20px rgba(59, 130, 246, 0.15); /* Blue shadow for tech */
             backdrop-filter: blur(8px); 
             border: 1px solid var(--border-color); 
             transition: all 0.5s;
@@ -104,13 +134,13 @@
             padding: 15px 20px;
             border-radius: 15px 15px 0 0;
             margin: -30px -30px 20px -30px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         }
         .hust-jit-logo {
             font-size: 1.8rem;
             font-weight: 900;
             letter-spacing: 2px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
         }
         
         /* Buttons */
@@ -150,26 +180,29 @@
             border: 2px solid var(--border-color);
         }
         .choice-button {
-            background-color: #E0F2F1; 
-            color: var(--accent-color);
-            border: 1px solid var(--accent-color);
+            background-color: var(--bg-option); 
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
             transition: all 0.2s;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
         }
         .choice-button:hover {
             background-color: var(--accent-color);
             color: white;
             transform: scale(1.02);
+            box-shadow: 0 6px 0 rgba(0,0,0,0.2);
         }
         .dark .choice-button {
-            background-color: #1e293b;
-            color: var(--accent-color);
+            background-color: var(--bg-option);
+            color: var(--text-primary);
+            border-color: var(--border-color);
         }
         .dark .choice-button:hover {
             background-color: var(--accent-color);
-            color: var(--text-primary);
+            color: var(--bg-body);
         }
         
-        /* NEW: Speech Glow Effect */
+        /* Speech Glow Effect */
         .speech-glow {
             animation: pulse-glow 1.5s infinite;
         }
@@ -202,6 +235,9 @@
     </style>
 </head>
 <body class="light">
+    
+    <!-- CYBER GRID OVERLAY -->
+    <div class="cyber-grid-overlay"></div>
 
     <!-- OVERLAY và NAV MENU -->
     <div id="navOverlay" class="nav-overlay hidden fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-40"></div>
@@ -250,11 +286,11 @@
             </button>
             <div class="text-center">
                 <h1 class="hust-jit-logo">IT E6-HUST</h1>
-                <p class="text-xs font-light opacity-80">IT E6 - Japanese IT Program</p>
+                <p class="text-xs font-light opacity-80">Japanese IT Program</p>
             </div>
             <div id="miniScoreDisplay" class="text-right">
                 <p class="text-xs font-light opacity-80">Điểm</p>
-                <!-- SỬA LỖI HIỂN THỊ ĐIỂM -->
+                <!-- HIỂN THỊ ĐIỂM -->
                 <p class="text-xl font-bold text-score-color" id="currentScore">0</p>
             </div>
         </div>
@@ -270,7 +306,7 @@
                 
                 <div id="scoreBoard" class="flex justify-between items-center p-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 mb-4">
                     <div class="flex items-center text-sm font-semibold text-gray-700 dark:text-gray-300">
-                        <i class="fas fa-coins text-yellow-500 mr-2"></i>
+                        <i class="fas fa-coins text-score-color mr-2"></i>
                         <span>Tổng Điểm:</span> <span class="text-lg font-bold text-main-color ml-2" id="gameTotalScore">0</span>
                     </div>
                     <div class="flex items-center text-sm font-semibold text-gray-700 dark:text-gray-300">
@@ -317,7 +353,7 @@
                     <i class="fas fa-calculator text-main-color mr-3"></i> Công Cụ Chuyển Đổi Số Đếm
                 </h2>
                 <input type="number" id="inputNumber" placeholder="Ví dụ: 10000, 350000, 9999999" 
-                   class="input-field w-full text-xl text-center tracking-wide mb-4 border-2 p-3 rounded-lg" 
+                   class="input-field w-full text-xl text-center tracking-wide mb-4 border-2 p-3 rounded-lg dark:bg-gray-700 dark:text-white dark:border-gray-600" 
                    min="0" max="9999999">
                    
                 <button id="convertButton" class="btn-primary w-full flex items-center justify-center gap-2 mb-6">
@@ -340,7 +376,7 @@
                 </h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Chọn ngày tháng để xem cách đọc tiếng Nhật:</p>
                 
-                <input type="date" id="inputDate" class="input-field w-full text-lg mb-4 border-2 p-3 rounded-lg">
+                <input type="date" id="inputDate" class="input-field w-full text-lg mb-4 border-2 p-3 rounded-lg dark:bg-gray-700 dark:text-white dark:border-gray-600">
                    
                 <button id="convertDateButton" class="btn-primary w-full flex items-center justify-center gap-2 mb-6">
                     <i class="fas fa-language"></i> Chuyển Đổi Ngày
@@ -363,7 +399,7 @@
                 
                 <div class="bg-red-50 dark:bg-red-900 p-6 rounded-xl border-2 border-red-300 dark:border-red-700 text-center space-y-3">
                     <p class="text-sm text-gray-600 dark:text-gray-300">Bạn đã tích lũy:</p>
-                    <!-- SỬA LỖI HIỂN THỊ ĐIỂM -->
+                    <!-- HIỂN THỊ ĐIỂM -->
                     <p class="text-5xl font-extrabold text-main-color dark:text-yellow-400" id="totalScoreDisplay">0</p>
                     <p class="text-xl font-bold text-gray-800 dark:text-white">Điểm Thưởng</p>
                 </div>
@@ -462,8 +498,9 @@
         let voices = [];
         let ttsActive = false;
         let currentHiragana = ''; // Lưu hiragana để replay
-
-        // --- FIREBASE & AUTH LOGIC (Updated for better config error handling) ---
+        let currentRomaji = '';   // Lưu romaji để hiển thị
+        
+        // --- FIREBASE & AUTH LOGIC ---
         async function setupFirebase() {
             if (!window.firebaseConfig) {
                 console.error("Firebase config not available. Running in local mode.");
@@ -625,13 +662,12 @@
             'kke': 'っけ',
             // Long vowels (handled by parsing logic)
             'ou': 'おう',
-            'ee': 'えい', // Default long e
+            'ee': 'えい', 
             'ei': 'えい',
         };
 
 
         function convertToRomaji(num) { 
-            // Đã kiểm tra: Logic chuyển số sang romaji ổn
             if (num < 0 || num > 9999999) return "Lỗi: Số không hợp lệ.";
             if (num === 0) return 'zero';
 
@@ -705,7 +741,7 @@
         function convertLessThan100(num) {
             if (num === 0) return '';
             if (num <= 10) return numberMap[num];
-            if (num < 20) return 'juu' + numberMap[num % 10]; // 11-19
+            if (num < 20) return 'juu ' + numberMap[num % 10]; // 11-19
             
             const juu = Math.floor(num / 10);
             const ichi = num % 10;
@@ -746,7 +782,8 @@
                 }
                 
                 if (!matched) {
-                    hiragana += cleanRomaji[i];
+                    // Xử lý các trường hợp không map được (thường là lỗi)
+                    hiragana += cleanRomaji[i]; 
                     i++;
                 }
             }
@@ -758,12 +795,12 @@
             return hiragana;
         }
         
-        // Logic chuyển đổi ngày tháng (bổ sung)
+        // Logic chuyển đổi ngày tháng
         function convertDateToJapanese(dateString) {
             const [year, month, day] = dateString.split('-').map(Number);
 
             // Năm (Nen)
-            const yearRomaji = convertToRomaji(year) + 'nen';
+            const yearRomaji = convertToRomaji(year).replace(/\s/g, '') + 'nen';
             
             // Tháng (Gatsu)
             let monthRomaji = '';
@@ -772,7 +809,7 @@
             const specialMonths = {
                 4: 'shi', 7: 'shichi', 9: 'ku'
             };
-            const monthPrefix = specialMonths[month] || convertToRomaji(month);
+            const monthPrefix = specialMonths[month] || convertToRomaji(month).replace(/\s/g, '');
             monthRomaji = monthPrefix + 'gatsu';
             
             // Ngày (Nichi/Ka) - Phức tạp hơn
@@ -786,10 +823,11 @@
                 dayRomaji = specialDays[day];
             } else if (day >= 11 && day <= 31) {
                 const daySuffix = 'nichi';
-                const dayPrefix = convertToRomaji(day);
+                // Xóa khoảng trắng trong romaji của ngày, ví dụ: 'juu ichi' -> 'juuichi'
+                const dayPrefix = convertToRomaji(day).replace(/\s/g, '');
                 dayRomaji = dayPrefix + daySuffix;
             } else {
-                dayRomaji = convertToRomaji(day) + 'nichi';
+                dayRomaji = convertToRomaji(day).replace(/\s/g, '') + 'nichi';
             }
             
             const romaji = `${yearRomaji} ${monthRomaji} ${dayRomaji}`;
@@ -806,29 +844,29 @@
         // --- SPEECH UTILS (TTS - Optimized for iOS) ---
         function populateVoiceList() {
             voices = speechSynthesis.getVoices().filter(voice => voice.lang.startsWith('ja'));
-            // Chỉ cần lấy 1 giọng Nhật mặc định cho việc phát âm
+            // Sau khi tìm thấy giọng, có thể chọn một giọng cụ thể nếu cần
         }
         
-        let voiceCheckInterval = null; 
         function startVoiceCheck() {
              populateVoiceList();
              if (voices.length === 0 && 'onvoiceschanged' in speechSynthesis) {
-                 // Lắng nghe sự kiện voiceschanged nếu chưa có giọng
                  speechSynthesis.onvoiceschanged = () => {
                      populateVoiceList();
                      if (voices.length > 0) {
                         showToast("Đã tìm thấy giọng Nhật.", 'accent-color');
-                        speechSynthesis.onvoiceschanged = null; // Ngừng lắng nghe
+                        speechSynthesis.onvoiceschanged = null; 
+                        // Nếu chưa có vòng chơi, bắt đầu vòng mới ngay
+                        if (gameState.currentGameNumber === null) generateGameRound();
                      }
                  };
              } else if (voices.length > 0) {
-                 showToast("Đã tải giọng nói TTS.", 'accent-color');
+                 // Nếu đã có giọng, không cần toast
              }
         }
 
         function speakText(text) {
             if (!text || voices.length === 0) {
-                 showToast("Không tìm thấy giọng Nhật trên thiết bị (ja-JP). Vui lòng kiểm tra cài đặt TTS của hệ điều hành.", 'error');
+                 showToast("Không tìm thấy giọng Nhật. Vui lòng kiểm tra cài đặt TTS của hệ điều hành.", 'error');
                  startGameBtn.textContent = 'Phát Âm Số';
                  startGameBtn.disabled = false;
                  return;
@@ -839,12 +877,11 @@
             }
             
             const utterance = new SpeechSynthesisUtterance(text);
-            // Ưu tiên giọng có 'ja-JP' trong tên hoặc giọng đầu tiên
             const japaneseVoice = voices.find(v => v.name.includes('ja-JP')) || voices[0];
             
             utterance.voice = japaneseVoice; 
             utterance.lang = 'ja-JP';
-            utterance.rate = 0.9; // Giảm tốc độ một chút để dễ nghe hơn
+            utterance.rate = 0.9; 
             utterance.pitch = 1.0;
             
             const targetButton = gameState.currentGameNumber === null ? startGameBtn : replayBtn;
@@ -913,7 +950,7 @@
         function updateScoreDisplay() {
             updateReplayAllowance(); // Cập nhật giới hạn nghe lại
             
-            // HIỂN THỊ ĐIỂM: Thêm toLocaleString để định dạng số lớn
+            // HIỂN THỊ ĐIỂM
             currentScoreEl.textContent = gameState.totalScore.toLocaleString('vi-VN');
             gameTotalScoreEl.textContent = gameState.totalScore.toLocaleString('vi-VN');
             gameComboStreakEl.textContent = gameState.comboStreak;
@@ -958,6 +995,7 @@
             gameChoicesEl.innerHTML = '';
             gameMessageEl.textContent = 'Nghe và chọn số đúng:';
             gameChoicesEl.classList.add('opacity-0', 'pointer-events-none');
+            startGameBtn.textContent = 'Phát Âm Số';
             
             // Reset lượt nghe lại dựa trên cấp bậc hiện tại
             updateReplayAllowance(); 
@@ -970,15 +1008,16 @@
             const correctNumber = Math.floor(Math.random() * (max + 1 - min)) + min;
             gameState.currentGameNumber = correctNumber;
 
-            // 3. Chuyển đổi thành Hiragana để đọc và lưu lại
-            const romaji = convertToRomaji(correctNumber);
-            currentHiragana = romajiToHiragana(romaji); // Lưu lại Hiragana
+            // 3. Chuyển đổi thành Hiragana và Romaji
+            currentRomaji = convertToRomaji(correctNumber);
+            currentHiragana = romajiToHiragana(currentRomaji); // Lưu lại Hiragana
+            
 
-            // 4. Tạo các lựa chọn nhiễu - Ưu tiên các số gần nhau
+            // 4. Tạo các lựa chọn nhiễu
             let choices = new Set([correctNumber]);
             const numChoices = 4;
 
-            // Strategy 1: Add Close Distractors (differ by 1, 10, or 100)
+            // Strategy 1: Add Close Distractors 
             const closeDiffs = [1, -1, 10, -10, 100, -100];
             
             for (let diff of closeDiffs) {
@@ -991,7 +1030,7 @@
                 }
             }
 
-            // Strategy 2: Fill remaining slots with random numbers (now allowing close proximity)
+            // Strategy 2: Fill remaining slots with random numbers
             while (choices.size < numChoices) {
                 let randomDistracter = Math.floor(Math.random() * (max + 1 - min)) + min;
                 if (!choices.has(randomDistracter)) {
@@ -1030,6 +1069,9 @@
         function checkAnswer(selectedNum, correctNum, buttonEl) {
             $$('.choice-button').forEach(btn => btn.disabled = true);
             
+            const correctRomaji = convertToRomaji(correctNum);
+            const correctHiragana = romajiToHiragana(correctRomaji);
+            
             if (selectedNum === correctNum) {
                 buttonEl.classList.add('bg-green-500', 'text-white', 'shadow-lg');
                 
@@ -1037,7 +1079,7 @@
                 gameState.totalScore += scoreGain;
                 gameState.comboStreak += 1;
                 
-                gameMessageEl.innerHTML = `✅ Chính xác! +${scoreGain} điểm. <span class="text-xs italic">(Combo: ${gameState.comboStreak})</span>`;
+                gameMessageEl.innerHTML = `✅ Chính xác! Số là ${correctNum.toLocaleString('vi-VN')} (<span class="text-main-color">${correctHiragana}</span>). +${scoreGain} điểm. <span class="text-xs italic">(Combo: ${gameState.comboStreak})</span>`;
                 showToast(`+${scoreGain} Điểm! Combo x${gameState.comboStreak}!`, 'accent-color');
 
             } else {
@@ -1047,8 +1089,8 @@
                          btn.classList.add('bg-green-500', 'text-white', 'shadow-lg');
                     }
                 });
-                const romaji = convertToRomaji(correctNum);
-                gameMessageEl.textContent = `❌ Sai rồi. Số đúng là ${correctNum.toLocaleString('vi-VN')} (${romaji}). Combo bị ngắt.`;
+                
+                gameMessageEl.innerHTML = `❌ Sai rồi. Số đúng là ${correctNum.toLocaleString('vi-VN')} (<span class="text-main-color">${correctHiragana}</span>). Combo bị ngắt.`;
                 gameState.comboStreak = 0;
                 
                 showToast(`Sai rồi. Số đúng là ${correctNum.toLocaleString('vi-VN')}!`, 'error');
@@ -1056,15 +1098,16 @@
             
             updateScoreDisplay(); // Lưu và hiển thị điểm mới
             
-            // Thiết lập vòng mới sau 2 giây
+            // THAY ĐỔI LỚN: Tự động chuyển sang vòng mới sau 2 giây
             setTimeout(() => {
-                startGameBtn.textContent = 'Bắt Đầu Vòng Mới';
                 $$('.choice-button').forEach(btn => {
                     btn.classList.remove('bg-green-500', 'text-white', 'shadow-lg', 'bg-red-500');
                     btn.disabled = false;
                 });
-                // Thiết lập lại game number thành null để lần click tiếp theo là vòng mới
-                gameState.currentGameNumber = null; 
+                // Thiết lập lại game number thành null, rồi gọi generateGameRound
+                gameState.currentGameNumber = null;
+                startGameBtn.textContent = 'Đang tạo vòng mới...';
+                generateGameRound();
             }, 2000);
         }
         
@@ -1087,7 +1130,7 @@
             });
         });
 
-        // --- CONVERTER LOGIC (FIXED) ---
+        // --- CONVERTER LOGIC ---
         function handleNumberConversion() {
             const numValue = inputNumberEl.value;
             const num = parseInt(numValue);
@@ -1110,7 +1153,7 @@
         
         convertButton.addEventListener('click', handleNumberConversion);
         
-        // --- DATE CONVERTER LOGIC (FIXED) ---
+        // --- DATE CONVERTER LOGIC ---
         function handleDateConversion() {
             const dateValue = inputDateEl.value;
             if (!dateValue) {
@@ -1124,7 +1167,7 @@
                 
                 dateConverterOutputEl.innerHTML = `
                     <p class="text-xs text-gray-500 dark:text-gray-400">${result.kanji}</p>
-                    <p class="mb-1 text-main-color text-2xl">${romajiToHiragana(result.romaji)}</p>
+                    <p class="mb-1 text-main-color text-2xl">${result.hiragana}</p>
                     <p class="text-sm text-gray-700 dark:text-gray-300">Romaji: ${result.romaji}</p>
                 `;
                 dateResultBoxEl.classList.remove('hidden');
@@ -1185,7 +1228,7 @@
         }
         
 
-        // --- NAVIGATION & TABS (giữ nguyên) ---
+        // --- NAVIGATION & TABS ---
         const openMenuBtn = $('#openMenuBtn');
         const navMenu = $('#navMenu');
         const navOverlay = $('#navOverlay');
@@ -1227,7 +1270,7 @@
             });
         });
 
-        // --- DARK MODE (giữ nguyên) ---
+        // --- DARK MODE ---
         const themeToggle = $('#themeToggle');
         const themeIcon = $('#themeIcon');
         const themeText = $('#themeText');
@@ -1272,27 +1315,32 @@
             // Kích hoạt nút mặc định 0-999
             const defaultRangeBtn = document.querySelector('[data-range="999"]');
             if (defaultRangeBtn) {
-                 // Không gọi click, mà gọi thẳng logic để tránh phát âm 2 lần
                  gameState.maxNumber = 999;
                  gameState.minNumber = 0;
                  rangeDisplayEl.textContent = 'Phạm vi hiện tại: 0 - 999.';
                  defaultRangeBtn.classList.add('active');
                  
-                 // Chỉ tạo vòng chơi khi đã có giọng nói
+                 // Chỉ tạo vòng chơi nếu đã có giọng nói, nếu không sẽ chờ startVoiceCheck
                  if (voices.length > 0) generateGameRound(); 
             }
         };
 
-        // Game Listener
+        // Game Listener (chỉ dùng để kích hoạt lần đầu hoặc phát lại)
         startGameBtn.addEventListener('click', () => {
             if (ttsActive) return;
             
-            // Lần click đầu tiên: Khởi tạo game và phát âm
+            // Nếu là lần đầu hoặc sau khi tự động chuyển vòng, gọi generateGameRound
             if (gameState.currentGameNumber === null) {
                 generateGameRound();
             } else {
-                // Lần click tiếp theo sau khi trả lời: Bắt đầu vòng mới
-                generateGameRound(); 
+                // Nếu đang trong vòng chơi (đang chờ trả lời), chỉ phát âm lại (Replay)
+                if (gameState.replaysLeftInRound > 0) {
+                    gameState.replaysLeftInRound--;
+                    speakText(currentHiragana);
+                    updateReplayButtonState();
+                } else {
+                    showToast("Đã hết lượt nghe lại cho vòng này!", 'error');
+                }
             }
         });
     </script>
