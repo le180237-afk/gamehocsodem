@@ -325,7 +325,11 @@
                 </button>
                 
                 <div id="resultBox" class="p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hidden transition-all">
-                    <!-- Output content here -->
+                    <p class="text-sm font-semibold text-gray-700 dark:text-gray-400 mb-2">Cách đọc tiếng Nhật (Hiragana/Romaji):</p>
+                    <div id="numberConverterOutput" class="font-bold"></div>
+                    <button id="copyNumberOutputButton" class="mt-2 text-xs text-gray-500 dark:text-gray-400 hover:text-main-color transition">
+                        <i class="fas fa-copy mr-1"></i> Copy Kết Quả
+                    </button>
                 </div>
             </div>
             
@@ -443,16 +447,30 @@
         const authBtn = $('#authBtn');
         const userIdDisplay = $('#userIdDisplay');
         
+        // Conversion DOM Elements
+        const inputNumberEl = $('#inputNumber');
+        const convertButton = $('#convertButton');
+        const resultBoxEl = $('#resultBox');
+        const numberConverterOutputEl = $('#numberConverterOutput');
+        
+        const inputDateEl = $('#inputDate');
+        const convertDateButton = $('#convertDateButton');
+        const dateResultBoxEl = $('#dateResultBox');
+        const dateConverterOutputEl = $('#dateConverterOutput');
+
+        
         let voices = [];
         let ttsActive = false;
         let currentHiragana = ''; // Lưu hiragana để replay
 
-        // --- FIREBASE & AUTH LOGIC ---
+        // --- FIREBASE & AUTH LOGIC (Updated for better config error handling) ---
         async function setupFirebase() {
             if (!window.firebaseConfig) {
                 console.error("Firebase config not available. Running in local mode.");
                 gameState.isAuthReady = true;
-                authBtn.textContent = 'Lỗi Config';
+                authBtn.textContent = 'Lỗi Config (Local)';
+                authBtn.disabled = true;
+                userIdDisplay.textContent = 'Chế độ ẩn danh (Không lưu điểm)';
                 return;
             }
             
@@ -497,15 +515,15 @@
                     authBtn.textContent = 'Đăng Nhập';
                     authBtn.onclick = handleSignIn; // In this environment, reload page for new token
                     authBtn.disabled = true; // Cannot sign in/out manually, only on token refresh
+                    updateScoreDisplay(); // Cập nhật lại UI scores
                 }
             });
         }
         
         function handleSignOut() {
-            // In Canvas environment, we rely on the token/session refresh, but we keep the illusion of sign out
+            // In Canvas environment, rely on the token/session refresh
             window.signOut(auth).then(() => {
                 showToast("Đã đăng xuất (Kết quả sẽ không được lưu).", 'error');
-                updateScoreDisplay(); // Reset UI scores
             }).catch(error => {
                 console.error("Sign Out Error:", error);
                 showToast("Lỗi đăng xuất.", 'error');
@@ -613,6 +631,7 @@
 
 
         function convertToRomaji(num) { 
+            // Đã kiểm tra: Logic chuyển số sang romaji ổn
             if (num < 0 || num > 9999999) return "Lỗi: Số không hợp lệ.";
             if (num === 0) return 'zero';
 
@@ -700,6 +719,7 @@
         function romajiToHiragana(romaji) { 
             let hiragana = '';
             let i = 0;
+            // Xử lý 'ch' và 'ts' trước khi loại bỏ khoảng trắng để bảo toàn
             let cleanRomaji = romaji.toLowerCase().replace(/\s/g, ''); 
             
             // Xử lý âm đôi ('tsu' nhỏ)
@@ -737,26 +757,78 @@
             
             return hiragana;
         }
+        
+        // Logic chuyển đổi ngày tháng (bổ sung)
+        function convertDateToJapanese(dateString) {
+            const [year, month, day] = dateString.split('-').map(Number);
 
-        // --- SPEECH UTILS (TTS) ---
+            // Năm (Nen)
+            const yearRomaji = convertToRomaji(year) + 'nen';
+            
+            // Tháng (Gatsu)
+            let monthRomaji = '';
+            let dayRomaji = '';
+
+            const specialMonths = {
+                4: 'shi', 7: 'shichi', 9: 'ku'
+            };
+            const monthPrefix = specialMonths[month] || convertToRomaji(month);
+            monthRomaji = monthPrefix + 'gatsu';
+            
+            // Ngày (Nichi/Ka) - Phức tạp hơn
+            const specialDays = {
+                1: 'tsuitachi', 2: 'futsuka', 3: 'mikka', 4: 'yokka', 5: 'itsuka',
+                6: 'muika', 7: 'nanoka', 8: 'youka', 9: 'kokonoka', 10: 'tooka',
+                14: 'juuyokka', 20: 'hatsuka', 24: 'nijuuyokka'
+            };
+
+            if (specialDays[day]) {
+                dayRomaji = specialDays[day];
+            } else if (day >= 11 && day <= 31) {
+                const daySuffix = 'nichi';
+                const dayPrefix = convertToRomaji(day);
+                dayRomaji = dayPrefix + daySuffix;
+            } else {
+                dayRomaji = convertToRomaji(day) + 'nichi';
+            }
+            
+            const romaji = `${yearRomaji} ${monthRomaji} ${dayRomaji}`;
+            const hiragana = romajiToHiragana(romaji);
+
+            return {
+                romaji: romaji.trim(),
+                hiragana: hiragana.trim(),
+                kanji: `${year}年${month}月${day}日`
+            };
+        }
+
+
+        // --- SPEECH UTILS (TTS - Optimized for iOS) ---
         function populateVoiceList() {
-            // Lấy tất cả giọng nói có sẵn và lọc ra giọng Nhật (ja-JP)
             voices = speechSynthesis.getVoices().filter(voice => voice.lang.startsWith('ja'));
+            // Chỉ cần lấy 1 giọng Nhật mặc định cho việc phát âm
         }
         
         let voiceCheckInterval = null; 
         function startVoiceCheck() {
              populateVoiceList();
-             if (voices.length === 0) {
-                 voiceCheckInterval = setInterval(populateVoiceList, 200);
-             } else if (voiceCheckInterval) {
-                 clearInterval(voiceCheckInterval);
+             if (voices.length === 0 && 'onvoiceschanged' in speechSynthesis) {
+                 // Lắng nghe sự kiện voiceschanged nếu chưa có giọng
+                 speechSynthesis.onvoiceschanged = () => {
+                     populateVoiceList();
+                     if (voices.length > 0) {
+                        showToast("Đã tìm thấy giọng Nhật.", 'accent-color');
+                        speechSynthesis.onvoiceschanged = null; // Ngừng lắng nghe
+                     }
+                 };
+             } else if (voices.length > 0) {
+                 showToast("Đã tải giọng nói TTS.", 'accent-color');
              }
         }
 
         function speakText(text) {
             if (!text || voices.length === 0) {
-                 showToast("Không tìm thấy giọng Nhật trên thiết bị của bạn. Vui lòng kiểm tra cài đặt TTS của hệ điều hành.", 'error');
+                 showToast("Không tìm thấy giọng Nhật trên thiết bị (ja-JP). Vui lòng kiểm tra cài đặt TTS của hệ điều hành.", 'error');
                  startGameBtn.textContent = 'Phát Âm Số';
                  startGameBtn.disabled = false;
                  return;
@@ -767,13 +839,16 @@
             }
             
             const utterance = new SpeechSynthesisUtterance(text);
-            // Ưu tiên giọng mặc định tiếng Nhật, nếu không có thì lấy giọng đầu tiên
-            utterance.voice = voices.find(v => v.default) || voices[0]; 
+            // Ưu tiên giọng có 'ja-JP' trong tên hoặc giọng đầu tiên
+            const japaneseVoice = voices.find(v => v.name.includes('ja-JP')) || voices[0];
+            
+            utterance.voice = japaneseVoice; 
             utterance.lang = 'ja-JP';
-            utterance.rate = 1.0; // Đã chỉnh lại tốc độ về 1.0 (tiêu chuẩn) để âm thanh rõ hơn
+            utterance.rate = 0.9; // Giảm tốc độ một chút để dễ nghe hơn
             utterance.pitch = 1.0;
             
-            const targetButton = gameChoicesEl.classList.contains('opacity-0') ? startGameBtn : replayBtn;
+            const targetButton = gameState.currentGameNumber === null ? startGameBtn : replayBtn;
+            if(gameState.currentGameNumber === null) startGameBtn.textContent = 'Đang Phát Âm...';
 
             utterance.onstart = () => {
                 targetButton.classList.add('speech-glow');
@@ -786,7 +861,7 @@
                 ttsActive = false;
                 
                 startGameBtn.disabled = false;
-                updateReplayButtonState(); // Cập nhật lại trạng thái nút replay
+                updateReplayButtonState(); 
                 
                 if(gameChoicesEl.classList.contains('opacity-0')) {
                      gameChoicesEl.classList.remove('opacity-0', 'pointer-events-none');
@@ -838,7 +913,7 @@
         function updateScoreDisplay() {
             updateReplayAllowance(); // Cập nhật giới hạn nghe lại
             
-            // SỬA LỖI HIỂN THỊ ĐIỂM: Thêm toLocaleString để định dạng số lớn
+            // HIỂN THỊ ĐIỂM: Thêm toLocaleString để định dạng số lớn
             currentScoreEl.textContent = gameState.totalScore.toLocaleString('vi-VN');
             gameTotalScoreEl.textContent = gameState.totalScore.toLocaleString('vi-VN');
             gameComboStreakEl.textContent = gameState.comboStreak;
@@ -899,7 +974,7 @@
             const romaji = convertToRomaji(correctNumber);
             currentHiragana = romajiToHiragana(romaji); // Lưu lại Hiragana
 
-            // 4. Tạo các lựa chọn nhiễu - ĐÃ CHỈNH SỬA LẠI LOGIC ĐỂ CÁC SỐ GẦN NHAU HƠN
+            // 4. Tạo các lựa chọn nhiễu - Ưu tiên các số gần nhau
             let choices = new Set([correctNumber]);
             const numChoices = 4;
 
@@ -937,8 +1012,6 @@
             
             // 5. Phát âm lần đầu
             speakText(currentHiragana);
-            startGameBtn.textContent = 'Đang Phát Âm...';
-            startGameBtn.disabled = true;
         }
 
         // Replay Logic
@@ -990,7 +1063,8 @@
                     btn.classList.remove('bg-green-500', 'text-white', 'shadow-lg', 'bg-red-500');
                     btn.disabled = false;
                 });
-                generateGameRound();
+                // Thiết lập lại game number thành null để lần click tiếp theo là vòng mới
+                gameState.currentGameNumber = null; 
             }, 2000);
         }
         
@@ -1007,9 +1081,86 @@
                 rangeButtons.forEach(btn => btn.classList.remove('active'));
                 e.target.classList.add('active');
                 
+                // Bắt đầu vòng mới ngay khi đổi range
                 generateGameRound();
                 showToast(`Đã chuyển phạm vi sang ${gameState.minNumber.toLocaleString('vi-VN')} - ${gameState.maxNumber.toLocaleString('vi-VN')}`, 'accent-color');
             });
+        });
+
+        // --- CONVERTER LOGIC (FIXED) ---
+        function handleNumberConversion() {
+            const numValue = inputNumberEl.value;
+            const num = parseInt(numValue);
+            
+            if (isNaN(num) || num < 0 || num > 9999999) {
+                showToast("Vui lòng nhập số hợp lệ (0 - 9,999,999).", 'error');
+                resultBoxEl.classList.add('hidden');
+                return;
+            }
+            
+            const romaji = convertToRomaji(num);
+            const hiragana = romajiToHiragana(romaji);
+            
+            numberConverterOutputEl.innerHTML = `
+                <p class="mb-1 text-main-color text-2xl">${hiragana}</p>
+                <p class="text-sm text-gray-700 dark:text-gray-300">Romaji: ${romaji}</p>
+            `;
+            resultBoxEl.classList.remove('hidden');
+        }
+        
+        convertButton.addEventListener('click', handleNumberConversion);
+        
+        // --- DATE CONVERTER LOGIC (FIXED) ---
+        function handleDateConversion() {
+            const dateValue = inputDateEl.value;
+            if (!dateValue) {
+                showToast("Vui lòng chọn một ngày.", 'error');
+                dateResultBoxEl.classList.add('hidden');
+                return;
+            }
+
+            try {
+                const result = convertDateToJapanese(dateValue);
+                
+                dateConverterOutputEl.innerHTML = `
+                    <p class="text-xs text-gray-500 dark:text-gray-400">${result.kanji}</p>
+                    <p class="mb-1 text-main-color text-2xl">${romajiToHiragana(result.romaji)}</p>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">Romaji: ${result.romaji}</p>
+                `;
+                dateResultBoxEl.classList.remove('hidden');
+            } catch (e) {
+                console.error("Date conversion error:", e);
+                showToast("Lỗi chuyển đổi ngày. Vui lòng kiểm tra lại ngày tháng.", 'error');
+                dateResultBoxEl.classList.add('hidden');
+            }
+        }
+        
+        convertDateButton.addEventListener('click', handleDateConversion);
+
+        // Copy functionality (simple version)
+        function copyToClipboard(text, successMessage) {
+            try {
+                const tempInput = document.createElement('textarea');
+                tempInput.value = text;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                showToast(successMessage, 'accent-color');
+            } catch (err) {
+                showToast("Không thể copy tự động. Vui lòng copy thủ công.", 'error');
+            }
+        }
+
+        $('#copyNumberOutputButton').addEventListener('click', () => {
+             const romaji = convertToRomaji(parseInt(inputNumberEl.value));
+             const hiragana = romajiToHiragana(romaji);
+             copyToClipboard(`${hiragana} (${romaji})`, "Đã copy kết quả chuyển đổi số!");
+        });
+
+        $('#copyDateOutputButton').addEventListener('click', () => {
+             const dateResult = convertDateToJapanese(inputDateEl.value);
+             copyToClipboard(`${dateResult.hiragana} (${dateResult.romaji})`, "Đã copy kết quả chuyển đổi ngày!");
         });
 
         // --- TOAST & UTILS ---
@@ -1033,9 +1184,6 @@
             }, 3000);
         }
         
-        // Chức năng copy (omitted for brevity, assume correct)
-        // ...
-
 
         // --- NAVIGATION & TABS (giữ nguyên) ---
         const openMenuBtn = $('#openMenuBtn');
@@ -1070,6 +1218,7 @@
                 navOverlay.classList.add('hidden');
                 
                 if (targetPage === 'game') {
+                    // Đảm bảo game được khởi tạo/tiếp tục
                     if (gameState.currentGameNumber === null) generateGameRound();
                 }
                 if (targetPage === 'score') {
@@ -1115,7 +1264,7 @@
         window.onload = () => {
             applyInitialTheme();
             setupFirebase(); // Bắt đầu kết nối Firebase
-            startVoiceCheck();
+            startVoiceCheck(); // Bắt đầu kiểm tra giọng nói
             
             const today = new Date().toISOString().split('T')[0];
             $('#inputDate').value = today;
@@ -1123,16 +1272,27 @@
             // Kích hoạt nút mặc định 0-999
             const defaultRangeBtn = document.querySelector('[data-range="999"]');
             if (defaultRangeBtn) {
-                 defaultRangeBtn.click(); 
+                 // Không gọi click, mà gọi thẳng logic để tránh phát âm 2 lần
+                 gameState.maxNumber = 999;
+                 gameState.minNumber = 0;
+                 rangeDisplayEl.textContent = 'Phạm vi hiện tại: 0 - 999.';
+                 defaultRangeBtn.classList.add('active');
+                 
+                 // Chỉ tạo vòng chơi khi đã có giọng nói
+                 if (voices.length > 0) generateGameRound(); 
             }
         };
 
         // Game Listener
         startGameBtn.addEventListener('click', () => {
-            if (!ttsActive) {
+            if (ttsActive) return;
+            
+            // Lần click đầu tiên: Khởi tạo game và phát âm
+            if (gameState.currentGameNumber === null) {
                 generateGameRound();
             } else {
-                showToast("Vui lòng đợi âm thanh hoàn tất!", 'error');
+                // Lần click tiếp theo sau khi trả lời: Bắt đầu vòng mới
+                generateGameRound(); 
             }
         });
     </script>
